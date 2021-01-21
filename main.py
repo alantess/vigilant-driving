@@ -61,10 +61,6 @@ def make_patches(img:Tensor, patch_size:int) -> Tensor:
     return flatten_img
 
 
-
-
-
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     image = T.randn((2,3,32,32))
