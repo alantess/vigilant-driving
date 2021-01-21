@@ -12,21 +12,6 @@ import torch.optim as optim
 from torch.nn.modules import transformer
 import torchvision.transforms as transforms
 
-"""
-1 Image is the source and the other is the target
-the source can be represented as as 32 x 32 image
-while the target can be a 48 x 48 image
-
-DIMS = S  x N  x E
-Source Dims = 4 x 32 x 768
-
-
-Src goes through GTRxL and MLP HEAD
-We get a classification
-
-# Test this on the markov model dataset I have
-"""
-
 
 def make_patches(img: Tensor, patch_size: int) -> Tensor:
     """
@@ -88,6 +73,9 @@ class MarkovNet(nn.Module):
         self.out = nn.Linear(h_dims, n_classes)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
+    def save(self, path):
+        T.save(self.state_dict(), path)
+
     def forward(self, x):
         x = self.transformer(x)
         x = F.relu(self.dropout(self.fc1(x)))
@@ -101,14 +89,14 @@ def calculate_d_model(trainloader, patches):
     return img.size(2)
 
 
-def train(train_dir, test_dir, epochs, device, nheads=4, t_layers=3, h_dims=256,patch_dims=16, train=True):
+def train(train_dir, test_dir, epochs, device, nheads=4, t_layers=3, h_dims=256, patch_dims=16, train=True):
     trainloader, testloader = load_dataset(train_dir, test_dir, BATCH_SIZE)
     d_model = calculate_d_model(trainloader, 16)
     n_classes = 2
-    best_score = -np.inf
+    best_score = np.inf
 
     criterion = nn.CrossEntropyLoss()
-    model = MarkovNet(d_model,nheads, t_layers, n_classes, h_dims).to(device)
+    model = MarkovNet(d_model, nheads, t_layers, n_classes, h_dims).to(device)
     print("Train loader size: ", len(trainloader))
     print("Model Params: ", sum(p.numel() for p in model.parameters() if p.requires_grad))
 
@@ -116,9 +104,12 @@ def train(train_dir, test_dir, epochs, device, nheads=4, t_layers=3, h_dims=256,
         print("Train mode initiated.")
         for epoch in range(epochs):
             running_loss = 0.0
-            for i , data in enumerate(trainloader,0):
+            total_loss = 0.0
+            correct = 0
+            total = 0
+            for i, data in enumerate(trainloader, 0):
                 inputs, labels = data
-                img = make_patches(inputs,patch_dims)
+                img = make_patches(inputs, patch_dims)
                 img, labels = img.to(device), labels.to(device)
 
                 for p in model.parameters():
@@ -133,18 +124,36 @@ def train(train_dir, test_dir, epochs, device, nheads=4, t_layers=3, h_dims=256,
                 running_loss += loss.item()
 
                 if i % 69 == 68:
-                    print(f"|{epoch}|{i}|\tloss: {running_loss/69:.3f}")
+                    print(f"|{epoch}|{i + 1}|\tloss: {running_loss / 69:.3f}")
+                    total_loss += running_loss
                     running_loss = 0.0
+
+            if total_loss < best_score:
+                print("Saving...")
+                best_score = total_loss
+                model.save("markov_net.pt")
+
+            if epoch % 5 == 0:
+                with T.no_grad():
+                    for j , info in enumerate(testloader, 0):
+                        input, label = info
+                        image = make_patches(input,patch_dims)
+                        image, label = image.to(device), label.to(device)
+                        out = model(image).mean(0)
+                        _, predicted = T.max(out.data, 1)
+                        correct += T.sum(predicted == label)
+                        total += label.size(0)
+
+                        acc = (correct / total) * 100
+                    print(f"Accuracy on val set: {acc:.2f}% ")
+
+
+
         print("FINISHED.")
     else:
         print("Test mode initiated.")
 
 
-
-
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     EPOCHS = 100
     BATCH_SIZE = 32
@@ -157,6 +166,4 @@ if __name__ == '__main__':
     train_dir = '../../dataset/ltc_classifer'
     test_dir = '../../dataset/ltc_test_classifier'
 
-    train(train_dir,test_dir,EPOCHS,device)
-
-
+    train(train_dir, test_dir, EPOCHS, device, t_layers=4)
