@@ -14,12 +14,12 @@ from torchvision import transforms, models
 
 
 class CNNGRU(nn.Module):
-    def __init__(self, lr=0.00065):
+   def __init__(self, lr=0.00065):
         super(CNNGRU, self).__init__()
         self.base_model = models.resnet50(pretrained=True)
         self.fc1 = nn.Linear(1000, 512)
         self.fc2 = nn.Linear(512, 128)
-        self.gru = nn.GRU(128, 256, 4)
+        self.gru = nn.GRU(128, 256, 6)
         self.out = nn.Linear(256, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
@@ -29,6 +29,7 @@ class CNNGRU(nn.Module):
         x = F.relu(self.fc2(x))
         x = x.unsqueeze(1)
         out, h0 = self.gru(x)
+        out = out.view(-1,256)
         out = self.out(out).mean(1)
         return out
 
@@ -110,8 +111,7 @@ def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = Tru
                 i += 1
                 index = i * batch
                 # Set labels
-                y = labels[index-batch:index] 
-                
+                y = labels[index-batch:index].reshape(-1)
                 # # zeros out gradients
                 for p in model.parameters():
                     p.grad = None
@@ -131,6 +131,7 @@ def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = Tru
 
                 image_tensor = T.zeros((batch, 3,256,256), device=device)
                 count = 0
+                break
 
             success, image = video.read()
 
@@ -154,8 +155,8 @@ if __name__ == '__main__':
     np.random.seed(SEED)
     T.backends.cudnn.benchmark = True
     best_loss = np.inf
-    BATCH_SIZE = 16
-    EPOCHS = 200
+    BATCH_SIZE = 32
+    EPOCHS = 3 
     device = T.device("cuda") if T.cuda.is_available() else T.device("cpu")
 
     criterion = nn.MSELoss()
@@ -170,7 +171,7 @@ if __name__ == '__main__':
 
     
 
-    train(train_video,train_labels,transform, criterion, 20)
+    train(train_video,train_labels,transform, criterion, BATCH_SIZE, EPOCHS)
 
 
 
