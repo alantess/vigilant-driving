@@ -13,14 +13,34 @@ import matplotlib.pyplot as plt
 from torchvision import transforms, models
 
 
+class VidResnet(nn.Module):
+    def __init__(self, n_outs,lr=0.00025):
+        super(VidResnet, self).__init__()
+        self.base_model = models.video.r3d_18(pretrained=True)
+        self.gru = nn.GRU(400,256,3)
+        self.fc1 = nn.Linear(256,128)
+        self.output = nn.Linear(128,n_outs)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+
+    def forward(self, x):
+        x = self.base_model(x)
+        x = x.unsqueeze(1)
+        out, h0 = self.gru(x)
+        out = out.view(-1)
+        out = F.relu(self.fc1(out))
+        out = self.output(out)
+        return out
+
+
 class CNNGRU(nn.Module):
-   def __init__(self, lr=0.00065):
+    def __init__(self,n_outs, lr=0.00025):
         super(CNNGRU, self).__init__()
+        self.n_outs = n_outs
         self.base_model = models.resnet50(pretrained=True)
-        self.fc1 = nn.Linear(1000, 512)
-        self.fc2 = nn.Linear(512, 128)
-        self.gru = nn.GRU(128, 256, 6)
-        self.out = nn.Linear(256, 1)
+        self.fc1 = nn.Linear(1000, 100)
+        self.fc2 = nn.Linear(100, 100)
+        self.gru = nn.GRU(100, 128, 3)
+        self.output = nn.Linear(128, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, x):
@@ -29,13 +49,13 @@ class CNNGRU(nn.Module):
         x = F.relu(self.fc2(x))
         x = x.unsqueeze(1)
         out, h0 = self.gru(x)
-        out = out.view(-1,256)
-        out = self.out(out).mean(1)
+        out = out.view(self.n_outs,-1)
+        out = self.output(out).view(-1)
         return out
 
 
 class CNNTransformer(nn.Module):
-    def __init__(self, lr=0.00045):
+    def __init__(self, lr=0.00025):
         super(CNNTransformer, self).__init__()
         self.base_model = models.resnet50(pretrained=True)
         self.fc1 = nn.Linear(1000, 256)
@@ -50,8 +70,9 @@ class CNNTransformer(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.tranformer(x)
         x = F.relu(self.dropout(self.fc2(x)))
-        x = self.out(x).mean(0)
+        x = self.out(x).mean(0).view(-1)
         return x
+
 
 
 def imshow(img):
@@ -72,21 +93,31 @@ def vid_to_tensor(dir, transform):
     image_tensor = T.zeros((20400, 3, 256, 256))
     video = cv2.VideoCapture(dir)
     success, image = video.read()
-    count = 0
+    cur_step = 0
     while success:
-        image_tensor[count] = transform(image)
+        image_tensor[cur_step] = transform(image)
         success, image = video.read()
-        count += 1
+        cur_step += 1
 
     return image_tensor
 
-def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = True):
+def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =1,model='gru'):
     device = T.device("cuda") if T.cuda.is_available() else T.device("cpu")
     best_loss = np.inf
-    if gru:
-        model = CNNGRU().to(device)
+    vid_tensor = False
+
+    if model == 'gru':
+        print("GRU")
+        model = CNNGRU(time_steps).to(device)
         save_path = "models/gru.pt"
+    elif model =='video':
+        vid_tensor = True
+        print("VIDEO CNN-GRU")
+        model = VidResnet(time_steps).to(device)
+        save_path = "models/resnet_gru_video.pt"
     else:
+        
+        print("Transformer")
         model = CNNTransformer().to(device)
         save_path = "models/transformer.pt"
 
@@ -98,20 +129,31 @@ def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = Tru
     print("starting...")
     for epoch in range(EPOCHS):
         total_loss , running_loss = 0.0, 0.0
-        image_tensor = T.zeros((batch, 3,256,256), device=device)
+        # State vector 
+        if vid_tensor:
+            image_tensor = T.zeros((1,3,time_steps,SIZE,SIZE), device=device)
+        else:
+            image_tensor = T.zeros((time_steps,3 ,SIZE,SIZE), device=device)
+
+        # Retrieve the video
         video = cv2.VideoCapture(train_dir)
         success, image = video.read()
-        index,i,count  = 0,0,0
-        counter = 0
-        while success: 
-            image_tensor[count] = transform(image) 
-            count += 1
+        index,i,cur_step  = 0,0,0
 
-            if count % batch == 0: 
+        while success: 
+            # Assign the state vector a frame
+            if vid_tensor:
+                image_tensor[:,:,cur_step,:,:] = transform(image)
+            else:
+                image_tensor[cur_step] = transform(image) 
+
+            cur_step += 1
+            if cur_step % time_steps == 0: 
                 i += 1
-                index = i * batch
+                index = i * time_steps
                 # Set labels
-                y = labels[index-batch:index].reshape(-1)
+                y = labels[index-time_steps:index].reshape(-1)
+                
                 # # zeros out gradients
                 for p in model.parameters():
                     p.grad = None
@@ -122,17 +164,22 @@ def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = Tru
                 loss.backward()
                 # Optimizer step
                 model.optimizer.step()
-
+                
+                # Calculate loss
                 running_loss += loss.item()
                 total_loss += running_loss
                 if i % 255 == 254: 
                     running_loss /= 255
                     print(f"[{epoch}/{i+1}] \tLoss {running_loss:.3f} ")
+                
+                # Reset State Tensors, and current timestep 
 
-                image_tensor = T.zeros((batch, 3,256,256), device=device)
-                count = 0
-                break
+                if vid_tensor:
+                    image_tensor = T.zeros(( 1,3,time_steps,SIZE,SIZE), device=device)
+                else:
+                    image_tensor = T.zeros((time_steps, 3,SIZE,SIZE), device=device)
 
+                cur_step = 0
             success, image = video.read()
 
 
@@ -146,6 +193,7 @@ def train(train_dir,labels_dir,  transform,criterion, batch, EPOCHS =1,gru = Tru
 
 
 
+
 if __name__ == '__main__':
     train_video = "/mnt/d/pytorch/speedchallenge/data/train.mp4"
     train_labels = "/mnt/d/pytorch/speedchallenge/data/train.txt"
@@ -154,16 +202,19 @@ if __name__ == '__main__':
     T.manual_seed(SEED)
     np.random.seed(SEED)
     T.backends.cudnn.benchmark = True
+    T.cuda.empty_cache()
     best_loss = np.inf
-    BATCH_SIZE = 32
-    EPOCHS = 3 
-    device = T.device("cuda") if T.cuda.is_available() else T.device("cpu")
+    # 100 TIMESTEPS = 5 Seconds
+    TIMESTEPS = 80
+    EPOCHS = 1
+    device =  T.device("cuda") 
+    SIZE = 112
 
     criterion = nn.MSELoss()
 
-    transform = transforms.Compose([
+    transform = transforms.Compose([                   
             transforms.ToTensor(),
-            transforms.Resize((256,256)),
+            transforms.Resize((SIZE,SIZE)), 
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 
@@ -171,9 +222,6 @@ if __name__ == '__main__':
 
     
 
-    train(train_video,train_labels,transform, criterion, BATCH_SIZE, EPOCHS)
-
-
-
+    train(train_video,train_labels,transform, criterion, TIMESTEPS, SIZE,EPOCHS, model='gru')
 
 
