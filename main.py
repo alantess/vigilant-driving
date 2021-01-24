@@ -1,3 +1,4 @@
+import os
 import torch as T
 import cv2
 import numpy as np
@@ -14,9 +15,10 @@ from torchvision import transforms, models
 
 
 class VidResnet(nn.Module):
-    def __init__(self, n_outs,lr=0.00025):
+    def __init__(self, n_outs,lr=0.000010, chkpt_dir="models"):
         super(VidResnet, self).__init__()
         self.base_model = models.video.r3d_18(pretrained=True)
+        self.file = os.path.join(chkpt_dir, 'resvid_net_gru_weights')
         self.gru = nn.GRU(400,256,3)
         self.fc1 = nn.Linear(256,128)
         self.output = nn.Linear(128,n_outs)
@@ -31,6 +33,12 @@ class VidResnet(nn.Module):
         out = self.output(out)
         return out
 
+    def save(self):
+        T.save(self.state_dict(), self.file)
+
+    def load(self):
+        self.load_state_dict(T.load(self.file))
+
 
 class CNNGRU(nn.Module):
     def __init__(self,n_outs, lr=0.00025):
@@ -39,7 +47,7 @@ class CNNGRU(nn.Module):
         self.base_model = models.resnet50(pretrained=True)
         self.fc1 = nn.Linear(1000, 100)
         self.fc2 = nn.Linear(100, 100)
-        self.gru = nn.GRU(100, 128, 3)
+        self.gru = nn.GRU(100, 128, 3, dropout=0.2)
         self.output = nn.Linear(128, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
@@ -101,6 +109,7 @@ def vid_to_tensor(dir, transform):
 
     return image_tensor
 
+
 def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =1,model='gru'):
     device = T.device("cuda") if T.cuda.is_available() else T.device("cpu")
     best_loss = np.inf
@@ -114,7 +123,6 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
         vid_tensor = True
         print("VIDEO CNN-GRU")
         model = VidResnet(time_steps).to(device)
-        save_path = "models/resnet_gru_video.pt"
     else:
         
         print("Transformer")
@@ -153,11 +161,11 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
                 index = i * time_steps
                 # Set labels
                 y = labels[index-time_steps:index].reshape(-1)
-                
-                # # zeros out gradients
+
+                # zeros out gradients
                 for p in model.parameters():
                     p.grad = None
-                #
+
                 # Make a predictions and get the loss
                 pred = model(image_tensor)
                 loss = criterion(pred,y)
@@ -188,8 +196,9 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
         if total_loss < best_loss:
             print("Saving...")
             best_loss = total_loss
-
+            model.save()
     # imshow(torchvision.utils.make_grid(image_tensor.cpu()))
+
 
 
 
@@ -205,8 +214,8 @@ if __name__ == '__main__':
     T.cuda.empty_cache()
     best_loss = np.inf
     # 100 TIMESTEPS = 5 Seconds
-    TIMESTEPS = 80
-    EPOCHS = 1
+    TIMESTEPS = 40
+    EPOCHS = 1 
     device =  T.device("cuda") 
     SIZE = 112
 
@@ -215,13 +224,14 @@ if __name__ == '__main__':
     transform = transforms.Compose([                   
             transforms.ToTensor(),
             transforms.Resize((SIZE,SIZE)), 
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[0.43216, 0.394666, 0.37645],
+                                 std=[0.22803, 0.22145, 0.216989])
 
         ])
 
     
 
-    train(train_video,train_labels,transform, criterion, TIMESTEPS, SIZE,EPOCHS, model='gru')
+    train(train_video,train_labels,transform, criterion, TIMESTEPS, SIZE,EPOCHS, model='video')
+
 
 
