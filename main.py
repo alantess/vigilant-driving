@@ -15,7 +15,7 @@ from torchvision import transforms, models
 
 
 class VidResnet(nn.Module):
-    def __init__(self, n_outs,lr=0.000010, chkpt_dir="models"):
+    def __init__(self, n_outs,lr=0.00000005, chkpt_dir="models"):
         super(VidResnet, self).__init__()
         self.base_model = models.video.r3d_18(pretrained=True)
         self.file = os.path.join(chkpt_dir, 'resvid_net_gru_weights')
@@ -123,6 +123,7 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
         vid_tensor = True
         print("VIDEO CNN-GRU")
         model = VidResnet(time_steps).to(device)
+        model.load()
     else:
         
         print("Transformer")
@@ -215,7 +216,7 @@ if __name__ == '__main__':
     best_loss = np.inf
     # 100 TIMESTEPS = 5 Seconds
     TIMESTEPS = 40
-    EPOCHS = 1 
+    EPOCHS = 5000 
     device =  T.device("cuda") 
     SIZE = 112
 
