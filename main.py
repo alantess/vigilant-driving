@@ -15,7 +15,7 @@ from torchvision import transforms, models
 
 
 class VidResnet(nn.Module):
-    def __init__(self, n_outs,lr=0.00000005, chkpt_dir="models"):
+    def __init__(self, n_outs,lr=0.00000011, chkpt_dir="models"):
         super(VidResnet, self).__init__()
         self.base_model = models.video.r3d_18(pretrained=True)
         self.file = os.path.join(chkpt_dir, 'resvid_net_gru_weights')
