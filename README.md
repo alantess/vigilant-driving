@@ -20,11 +20,11 @@ $ python main.py -train True -epochs 1000
 ```
 
 ## Important notes
-- For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. 
+- For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can bbe found in the train function.
 ```python
-model.load()
+# model.load()
 ```
-- In order to save the model uncomment the code below in the train functionm
+- In order to save the model uncomment the code below in the train function. 
 ```python
 model.save()
 ```
