@@ -220,9 +220,9 @@ if __name__ == '__main__':
     parser.add_argument("-epochs", type=int, default = 1)
     args = parser.parse_args()
 
-    train_video = "/mnt/d/pytorch/speedchallenge/data/train.mp4"
-    test_video = "/mnt/d/pytorch/speedchallenge/data/test.mp4"
-    train_labels = "/mnt/d/pytorch/speedchallenge/data/train.txt"
+    train_video = "https://github.com/commaai/speedchallenge/raw/master/data/train.mp4"
+    test_video = "https://github.com/commaai/speedchallenge/raw/master/data/test.mp4"
+    train_labels = "https://raw.githubusercontent.com/commaai/speedchallenge/master/data/train.txt"
 
     SEED = 98
     T.manual_seed(SEED)
