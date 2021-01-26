@@ -23,8 +23,8 @@ $ python main.py -train True -epochs 1000
 ```
 
 ## Model Interpretability 
-![(Input Frames [1])](actual.jpg=250x "Inputs Frames from the video")
-![(Inpretation of those frames [1])](interpret.jpg=125x "Inputs Frames Interpretation")
+![(Input Frames [1])](actual.jpg =250x "Inputs Frames from the video")
+![(Inpretation of those frames [1])](interpret.jpg =125x "Inputs Frames Interpretation")
 
 ## Important notes
 - For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
