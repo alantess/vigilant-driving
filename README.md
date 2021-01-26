@@ -17,6 +17,7 @@ $ python main.py
 - Use "-epochs" to set the training epochs. Default is set to 1.
 ```sh
 $ cd vigilant-driving
+$ mkdir models
 $ python main.py -train True -epochs 1000
 ```
 
