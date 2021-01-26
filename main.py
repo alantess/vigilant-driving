@@ -1,5 +1,4 @@
 import argparse
-from captum.attr import IntegratedGradients
 import os
 import torch as T
 import cv2
@@ -10,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from gtrxl_torch.gtrxl_torch import GTrXL
 from sklearn.preprocessing import MinMaxScaler
+from captum.attr import Saliency
 from torch import optim
 import torchvision
 import matplotlib.pyplot as plt
@@ -47,7 +47,7 @@ def imshow(img):
     img = img.squeeze()
     img = torchvision.utils.make_grid(img.permute(1,0,2,3))
     npimg = img.numpy()
-    plt.imshow(npimg[0], cmap="RdBu")
+    plt.imshow(npimg[0], cmap='RdYlBu')
     plt.pause(0.0001)
     plt.show()
 
@@ -89,6 +89,8 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
     scaler, labels = get_labels(labels_dir)
     labels = T.tensor(labels, dtype=T.float, device=device)
     
+
+    
     plt.ion
     print("starting...")
     for epoch in range(EPOCHS):
@@ -115,6 +117,7 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
                 # zeros out gradients
                 for p in model.parameters():
                     p.grad = None
+
 
                 # Make a predictions and get the loss
                 pred = model(image_tensor)
@@ -168,10 +171,9 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
 
     print("Model Parameters", sum(p.numel() for p in model.parameters() if p.requires_grad))
     scaler,_ = get_labels(labels_dir)
+    # Model Inteprability
+    saliency = Saliency(model) 
 
-    integrated_gradient = IntegratedGradients(model)
-
-     
     plt.ion()
     print("Starting...")
     with T.no_grad(): 
@@ -198,6 +200,10 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
                     # zeros out gradients
                     for p in model.parameters():
                         p.grad = None
+
+                    # Uncomment to view model intepretability
+                    grads = saliency.attribute(image_tensor)
+                    imshow(grads.cpu())
 
                     # Make a predictions and get the loss
                     pred = model(image_tensor)
