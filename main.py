@@ -1,4 +1,5 @@
 import argparse
+from captum.attr import IntegratedGradients
 import os
 import torch as T
 import cv2
@@ -43,9 +44,11 @@ class VidResnet(nn.Module):
 
 # Display Frames
 def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
+    img = img.squeeze()
+    img = torchvision.utils.make_grid(img.permute(1,0,2,3))
     npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.imshow(npimg[0], cmap="RdBu")
+    plt.pause(0.0001)
     plt.show()
 
 # Retrieves label and sets scaler
@@ -86,6 +89,7 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
     scaler, labels = get_labels(labels_dir)
     labels = T.tensor(labels, dtype=T.float, device=device)
     
+    plt.ion
     print("starting...")
     for epoch in range(EPOCHS):
         total_loss , running_loss = 0.0, 0.0
@@ -131,8 +135,10 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
                     running_loss /= 255
                     print(f"[{epoch}/{i+1}] \tLoss {running_loss:.5f} ")
                 
-                # Reset State Tensors, and current timestep 
+                # Uncomment to show frames
+                # imshow(image_tensor.cpu())
 
+                # Reset State Tensors, and current timestep 
                 image_tensor = T.zeros(( 1,3,time_steps,SIZE,SIZE), device=device)
 
                 cur_step = 0
@@ -151,9 +157,6 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
         np.savetxt("train_pred.txt", speed_history)
         print("Predictions Saved")
 
-    # Uncomment to show frames
-    # imshow(torchvision.utils.make_grid(image_tensor.cpu()))
-
 
 def test(test_dir,labels_dir ,transform,time_steps,SIZE):
     device = T.device("cuda") if T.cuda.is_available() else T.device("cpu")
@@ -166,7 +169,10 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
     print("Model Parameters", sum(p.numel() for p in model.parameters() if p.requires_grad))
     scaler,_ = get_labels(labels_dir)
 
+    integrated_gradient = IntegratedGradients(model)
+
      
+    plt.ion()
     print("Starting...")
     with T.no_grad(): 
             # State vector 
@@ -175,6 +181,7 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
             video = cv2.VideoCapture(test_dir)
             # Read frames from video
             success, image = video.read()
+
             
             index,i,cur_step  = 0,0,0
 
@@ -200,6 +207,9 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
                     prediction = scaler.inverse_transform(prediction.cpu().detach().numpy())
                     speed_history= np.append(speed_history, prediction.flatten())
 
+                    # Uncomment to show frames
+                    # imshow(image_tensor.cpu())
+
                     # Reset State Tensors, and current timestep 
                     image_tensor = T.zeros(( 1,3,time_steps,SIZE,SIZE), device=device)
                     cur_step = 0
@@ -207,11 +217,11 @@ def test(test_dir,labels_dir ,transform,time_steps,SIZE):
 
 
 
+
     # Saving the predictions in a txt file
     np.savetxt("test_pred.txt", speed_history)
     print("Finished.\tPrediction saved.")
 
-        # imshow(torchvision.utils.make_grid(image_tensor.cpu()))
 
 
 if __name__ == '__main__':
@@ -220,9 +230,9 @@ if __name__ == '__main__':
     parser.add_argument("-epochs", type=int, default = 1)
     args = parser.parse_args()
 
-    train_video = "https://github.com/commaai/speedchallenge/raw/master/data/train.mp4"
-    test_video = "https://github.com/commaai/speedchallenge/raw/master/data/test.mp4"
-    train_labels = "https://raw.githubusercontent.com/commaai/speedchallenge/master/data/train.txt"
+    train_video = "/mnt/d/pytorch/speedchallenge/data/train.mp4"
+    test_video = "/mnt/d/pytorch/speedchallenge/data/test.mp4"
+    train_labels = "/mnt/d/pytorch/speedchallenge/data/train.txt"
 
     SEED = 98
     T.manual_seed(SEED)
