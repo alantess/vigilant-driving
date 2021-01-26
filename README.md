@@ -23,6 +23,8 @@ $ python main.py -train True -epochs 1000
 ```
 
 ## Model Interpretability 
+<img src="actual.jpg" alt="drawing" width="200"/>
+
 ![(Input Frames [1])](actual.jpg =250x "Inputs Frames from the video")
 ![(Inpretation of those frames [1])](interpret.jpg =125x "Inputs Frames Interpretation")
 
