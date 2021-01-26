@@ -22,11 +22,9 @@ $ mkdir models
 $ python main.py -train True -epochs 1000
 ```
 
-## Visuals 
-- Input Frames
-![(Input Frames [1])](actual.jpg "Inputs Frames from the video")
-- Model Saliency of those frames
-![(Inpretation of those frames [1])](interpret.jpg "Inputs Frames Interpretation")
+## Model Interpretability 
+![(Input Frames [1])](actual.jpg=250x "Inputs Frames from the video")
+![(Inpretation of those frames [1])](interpret.jpg=125x "Inputs Frames Interpretation")
 
 ## Important notes
 - For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
