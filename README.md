@@ -24,7 +24,7 @@ $ python main.py -train True -epochs 1000
 
 ## Visuals 
 - Input Frames
-![(Input Frames [1])](actual.png "Inputs Frames from the video")
+![(Input Frames [1])](actual.jpg "Inputs Frames from the video")
 - Model Saliency of those frames
 ![(Inpretation of those frames [1])](interpret.jpg "Inputs Frames Interpretation")
 
