@@ -30,6 +30,7 @@ $ python main.py -train True -epochs 1000
 ```python
 model.save()
 ```
+- Downloading the dataset may be better than using links. If done, please set the directories of the videos and text file in the code.
 ## SCORE ACHIEVED
 - MSE: 2.6 ~ 2.8
 
