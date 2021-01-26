@@ -16,6 +16,7 @@ $ python main.py
 - Use "-train" to set to training mode.
 - Use "-epochs" to set the training epochs. Default is set to 1.
 ```sh
+$ cd vigilant-driving
 $ python main.py -train True -epochs 1000
 ```
 
