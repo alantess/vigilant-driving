@@ -91,7 +91,7 @@ def train(train_dir,labels_dir,  transform,criterion, time_steps, SIZE ,EPOCHS =
     
 
     
-    plt.ion
+    plt.ion()
     print("starting...")
     for epoch in range(EPOCHS):
         total_loss , running_loss = 0.0, 0.0
