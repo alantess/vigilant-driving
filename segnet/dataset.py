@@ -17,7 +17,7 @@ class SegDataset(Dataset):
         self.mask_path = mask_path
 
     def __len__(self):
-        return len(self.mask) 
+        return len(self.mask) // 7 
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -40,7 +40,7 @@ class SegDataset(Dataset):
             mask = self.transform(mask)
             # GRAYSCALE the mask 
             grayscale = torchvision.transforms.Grayscale()
-            mask = grayscale(mask)
+            mask = grayscale(mask).squeeze(0) # Sends to grayscale and removes channels
 
 
         return image, mask

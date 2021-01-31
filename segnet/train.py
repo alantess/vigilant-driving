@@ -21,8 +21,8 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
         for i , data in enumerate(tqdm(data_loader)):
             # get the image and mask and send to device
             image, mask = data
-            image = image.to(device)
-            mask = mask.to(device)
+            image = image.to(device) # NxCxHxW
+            mask = mask.to(device).long() # NxHxW
 
             # Zero Grad
             for p in model.parameters():
@@ -30,8 +30,8 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
 
             # Forward Pass
             with torch.cuda.amp.autocast():
-                output = model(image)
-                loss = loss_fn(output, mask)
+                output = model(image) # NxCxHxW
+                loss = loss_fn(output, mask) 
             
             # Backwards Pass
             scaler.scale(loss).backward()
@@ -62,14 +62,14 @@ def test_model(model, data_loader,loss_fn, device):
         for i, data in enumerate(tqdm(data_loader)):
             image, mask = data 
             image = image.to(device)
-            mask = mask.to(device)
+            mask = mask.to(device).long()
 
             with torch.cuda.amp.autocast():
                 pred = model(image)
                 loss = loss_fn(pred, mask)
 
             total_loss += loss.item()
-            break
+
     print(f"Total loss: {total_loss:.5f}")
 
 

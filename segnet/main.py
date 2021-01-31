@@ -10,7 +10,7 @@ from train import train_model, test_model
 
 if __name__ == "__main__":
     # NEEDED VARIABLES FOR TRAINING
-    BATCH_SIZE = 2
+    BATCH_SIZE = 12
     EPOCHS = 100
     SEED = 23
     np.random.seed(SEED)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # PREPROCESSING FOR IMAGES 
     preprocess = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize((256,256)), 
+        transforms.Resize((513,513)), 
         transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
         ]) 
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     Shape of masks is (batch, 1 , 256, 256)
     """
     # LOSS FUNCTION 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.CrossEntropyLoss()
 
 
     # LOADING THE DATASET INTO TRAINLOADER
