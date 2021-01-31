@@ -10,15 +10,14 @@ Predicts the speed of the car from a video.
 ## Test mode:
 - Run main.py. **MUST** have a saved model ready.
 ```sh
-$ cd vigilant-driving
+$ cd vigilant-driving/speed
 $ python main.py 
 ```
 ## Training Mode
 - Use "-train" to set to training mode.
 - Use "-epochs" to set the training epochs. Default is set to 1.
 ```sh
-$ cd vigilant-driving
-$ mkdir models
+$ cd vigilant-driving/speed
 $ python main.py -train True -epochs 1000
 ```
 
