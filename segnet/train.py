@@ -8,7 +8,7 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
     best_score = -np.inf
     # Set model to device
     model = model.to(device)
-    # Load model if neededj
+    # Load model if needed
     if load_model:
         print("Model Loaded.")
         model.load()
