@@ -6,12 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataset import SegDataset
 from network import UNet
-from train import train_model
+from train import train_model, test_model
 
 if __name__ == "__main__":
     # NEEDED VARIABLES FOR TRAINING
-    BATCH_SIZE = 32
-    EPOCHS = 3
+    BATCH_SIZE = 2
+    EPOCHS = 100
     SEED = 23
     np.random.seed(SEED)
     torch.manual_seed(SEED)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     Shape of masks is (batch, 1 , 256, 256)
     """
     # LOSS FUNCTION 
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.MSELoss()
 
 
     # LOADING THE DATASET INTO TRAINLOADER
@@ -46,9 +46,14 @@ if __name__ == "__main__":
 
     # Load the model & Optimizer
     model = UNet()
-    optimizer = torch.optim.Adam(model.parameters(), lr = 0.0003)
+    optimizer = torch.optim.Adam(model.parameters(), lr = 0.0005)
 
     # Train Model 
     train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS)
+
+    # Test model
+    # test_model(model, train_loader, loss_fn, device)
+    
+
 
 

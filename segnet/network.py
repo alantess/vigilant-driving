@@ -14,10 +14,10 @@ class UNet(nn.Module):
     def forward(self,x):
         return self.u_net(x)
 
-    def save():
+    def save(self):
         torch.save(self.state_dict(), self.file)
 
-    def load():
+    def load(self):
         self.load_state_dict(torch.load(self.file))
     
 
