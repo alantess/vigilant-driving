@@ -21,8 +21,8 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
         for i , data in enumerate(tqdm(data_loader)):
             # get the image and mask and send to device
             image, mask = data
-            image = image.to(device) # NxCxHxW
-            mask = mask.to(device).long() # NxHxW
+            image = image.to(device,dtype=torch.float) # NxCxHxW
+            mask = mask.to(device, dtype=torch.long) # NxHxW
 
             # Zero Grad
             for p in model.parameters():
@@ -61,14 +61,19 @@ def test_model(model, data_loader,loss_fn, device):
     with torch.no_grad():
         for i, data in enumerate(tqdm(data_loader)):
             image, mask = data 
-            image = image.to(device)
-            mask = mask.to(device).long()
+            image = image.to(device, dtype=torch.float)
+            mask = mask.to(device, dtype=torch.long)
+            display(image, mask)
+            break
 
             with torch.cuda.amp.autocast():
                 pred = model(image)
                 loss = loss_fn(pred, mask)
 
+            display(image, pred.max(1))
+
             total_loss += loss.item()
+            break
 
     print(f"Total loss: {total_loss:.5f}")
 
@@ -76,13 +81,19 @@ def test_model(model, data_loader,loss_fn, device):
 
 
 def display(image, mask):
+    print(mask)
     image = image.cpu()
+    mask = mask.unsqueeze(1)
+    print(image.size())
+    print(mask.size())
     mask = mask.detach().cpu()
 
     image = image / 2 + 0.5
     mask = mask / 2  + 0.5
-    plt.imshow(image.permute(1,2,0), cmap='jet')
-    plt.imshow(mask.permute(1,2,0), cmap='hot', alpha=0.9)
-    plt.show()
-
-
+    plt.ion
+    for i in range(11):
+        plt.imshow(image[i].permute(1,2,0), cmap='jet')
+        plt.imshow(mask[i].permute(1,2,0), cmap='hot', alpha=0.5)
+        plt.show()
+    #
+    #

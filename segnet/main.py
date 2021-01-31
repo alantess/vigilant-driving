@@ -10,7 +10,7 @@ from train import train_model, test_model
 
 if __name__ == "__main__":
     # NEEDED VARIABLES FOR TRAINING
-    BATCH_SIZE = 12
+    BATCH_SIZE = 16
     EPOCHS = 100
     SEED = 23
     np.random.seed(SEED)
@@ -23,13 +23,13 @@ if __name__ == "__main__":
 
     # PATHS TO DATASETS 
     image_path = "/mnt/d/dataset/LanesBerkleyBDK/images/bdd100k/images/100k/train/" 
-    mask_path = "/mnt/d/dataset/LanesBerkleyBDK/map/bdd100k/drivable_maps/labels/train/"
+    mask_path = "/mnt/d/dataset/LanesBerkleyBDK/map/bdd100k/drivable_maps/color_labels/train/"
 
     # PREPROCESSING FOR IMAGES 
     preprocess = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize((513,513)), 
-        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
+        transforms.Resize((256,256)), 
+        # transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
         ]) 
 
     """
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # LOADING THE DATASET INTO TRAINLOADER
     trainset = SegDataset(image_path, mask_path, transform=preprocess)
-    train_loader = DataLoader(trainset, BATCH_SIZE, num_workers=2 , pin_memory=True)
+    train_loader = DataLoader(trainset, BATCH_SIZE, num_workers=2 , pin_memory=True, shuffle=True)
 
     # Load the model & Optimizer
     model = UNet()

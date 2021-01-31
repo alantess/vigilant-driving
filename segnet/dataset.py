@@ -32,15 +32,15 @@ class SegDataset(Dataset):
         # Default size is 720 x 1280
         ####################################################################
         image = cv2.imread(image_path)
-        mask = cv2.imread(self.mask[idx])
+        mask = cv2.imread(self.mask[idx], cv2.IMREAD_GRAYSCALE)
+        image = cv2.normalize(image, None, 0, 1, cv2.NORM_MINMAX, cv2.CV_32F)
+        mask = cv2.normalize(mask, None, 0, 1, cv2.NORM_MINMAX, cv2.CV_32F)
+        mask = np.expand_dims(mask,2)
 
         # Transforms images and mask 
         if self.transform:
             image = self.transform(image)
-            mask = self.transform(mask)
-            # GRAYSCALE the mask 
-            grayscale = torchvision.transforms.Grayscale()
-            mask = grayscale(mask).squeeze(0) # Sends to grayscale and removes channels
+            mask = self.transform(mask).squeeze(0)
 
 
         return image, mask
