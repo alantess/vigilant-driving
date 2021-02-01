@@ -3,7 +3,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
-def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=False):
+def train_model(model, optimizer, data_loader,loss_fn,device, epochs,scheduler,load_model=False):
     # Allows for gradient scaling
     scaler = torch.cuda.amp.GradScaler()
     best_score = np.inf
@@ -11,8 +11,8 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
     model = model.to(device)
     # Load model if neededj
     if load_model:
-        print("Model Loaded.")
         model.load()
+        print("Model Loaded.")
 
     # Begin training
     print("Starting...")
@@ -48,6 +48,7 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
             model.save()
 
         print(f"EPOCH {epoch}: TOTAL LOSS: {total_loss:.5f}")
+        scheduler.step()
 
     print("Finished.")
 

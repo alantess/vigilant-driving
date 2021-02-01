@@ -46,10 +46,12 @@ if __name__ == "__main__":
 
     # Load the model & Optimizer
     model = UNet()
-    optimizer = torch.optim.Adam(model.parameters(), lr = 0.0005)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr = 0.01)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
 
     # Train Model 
-    train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS)
+    train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS,scheduler)
 
     # Test model
     # test_model(model, train_loader, loss_fn, device)
