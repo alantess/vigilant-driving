@@ -39,6 +39,21 @@ model.save()
 ## SCORE ACHIEVED
 - MSE: 2.6 ~ 2.8
 
+# Directory Structure
+------
+    .
+    ├── Segnet              # Segmentation on lanes
+        ├── dataset.py      #  Class to hold for the dataset
+        ├── main.py         #  Main controller
+        ├── network.py      #  Segmentation model
+        ├── train.py        #  Train and test function
+    └── Speed               #  Speed Prediction
+        ├── main.py         #  Main controller
+        ├──test_pred.txt    #  Prediction for the training set
+        ├──train_pred.txt   #  Prediction on the testing set
+
+------
+
 # License
 ----
 
