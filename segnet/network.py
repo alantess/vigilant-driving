@@ -4,9 +4,9 @@ import torch.nn as nn
 import torchvision
 
 
-class UNet(nn.Module):
+class SegNet(nn.Module):
     def __init__(self, chkpt_dir="models"):
-        super(UNet,self).__init__()
+        super(SegNet,self).__init__()
         self.file = os.path.join(chkpt_dir, "deeplab_weights_driving")
         self.base_model = torchvision.models.segmentation.deeplabv3_resnet101(False, num_classes=2)
 

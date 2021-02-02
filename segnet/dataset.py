@@ -41,6 +41,7 @@ class SegDataset(Dataset):
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask).squeeze(0)
+            mask[mask > 0.5] = 1.0
 
 
         return image, mask

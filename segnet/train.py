@@ -3,13 +3,13 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
-def train_model(model, optimizer, data_loader,loss_fn,device, epochs,scheduler,load_model=False):
+def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=False):
     # Allows for gradient scaling
     scaler = torch.cuda.amp.GradScaler()
     best_score = np.inf
     # Set model to device
     model = model.to(device)
-    # Load model if neededj
+    # Load model if needed
     if load_model:
         model.load()
         print("Model Loaded.")
@@ -17,12 +17,13 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,scheduler,l
     # Begin training
     print("Starting...")
     for epoch in range(epochs):
+        loop = tqdm(data_loader)
         total_loss = 0
-        for i , data in enumerate(tqdm(data_loader)):
+        for i , (image, mask) in enumerate(loop):
             # get the image and mask and send to device
-            image, mask = data
-            image = image.to(device,dtype=torch.float) # NxCxHxW
+            image = image.to(device,dtype=torch.float32) # NxClassxHxW
             mask = mask.to(device, dtype=torch.long) # NxHxW
+            # display(image, mask)
 
             # Zero Grad
             for p in model.parameters():
@@ -30,9 +31,9 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,scheduler,l
 
             # Forward Pass
             with torch.cuda.amp.autocast():
-                output = model(image) # NxCxHxW
+                output = model(image) # NxClassxHxW
                 loss = loss_fn(output, mask) 
-            
+
             # Backwards Pass
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -40,15 +41,15 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,scheduler,l
 
             # compute losses for iteration 
             total_loss += loss.item()
-    
-    # If the loss is the lowest then save the model. 
-        if total_loss < best_score:
-            print("Saving...")
-            best_score = total_loss
-            model.save()
+            loop.set_postfix(loss=loss.item())
 
         print(f"EPOCH {epoch}: TOTAL LOSS: {total_loss:.5f}")
-        scheduler.step()
+    # If the loss is the lowest then save the model. 
+        if total_loss < best_score:
+            best_score = total_loss
+            model.save()
+            print("Model Saved.")
+
 
     print("Finished.")
 
@@ -64,17 +65,13 @@ def test_model(model, data_loader,loss_fn, device):
             image, mask = data 
             image = image.to(device, dtype=torch.float)
             mask = mask.to(device, dtype=torch.long)
-            display(image, mask)
-            break
 
             with torch.cuda.amp.autocast():
                 pred = model(image)
                 loss = loss_fn(pred, mask)
 
-            display(image, pred.max(1))
 
             total_loss += loss.item()
-            break
 
     print(f"Total loss: {total_loss:.5f}")
 
@@ -82,19 +79,12 @@ def test_model(model, data_loader,loss_fn, device):
 
 
 def display(image, mask):
-    print(mask)
     image = image.cpu()
-    mask = mask.unsqueeze(1)
-    print(image.size())
-    print(mask.size())
     mask = mask.detach().cpu()
 
     image = image / 2 + 0.5
     mask = mask / 2  + 0.5
-    plt.ion
-    for i in range(11):
-        plt.imshow(image[i].permute(1,2,0), cmap='jet')
-        plt.imshow(mask[i].permute(1,2,0), cmap='hot', alpha=0.5)
-        plt.show()
-    #
-    #
+    plt.imshow(image[1].permute(1,2,0), cmap='jet')
+    plt.imshow(mask[1].permute(1,2,0), cmap='hot', alpha=0.5)
+    # plt.savefig("test.jpg")
+    plt.show()
