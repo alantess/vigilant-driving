@@ -41,7 +41,7 @@ class SegDataset(Dataset):
             image = self.transform(image)
             mask = self.transform(mask).squeeze(0) 
             mask = mask * 10
-            mask[mask>2] = 2.0
+            mask[mask>2] = 2.0 # Assigns an int for the respective class in the mask
             image = normalize(image)
             
 

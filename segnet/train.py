@@ -3,6 +3,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Trains the model
 def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=False):
     # Allows for gradient scaling
     scaler = torch.cuda.amp.GradScaler()
@@ -54,7 +55,7 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
 
     print("Finished.")
 
-
+# Runs the loaded model on a batch
 def test_model(model, data_loader, device):
     model.to(device)
     model.load()
@@ -65,7 +66,7 @@ def test_model(model, data_loader, device):
         y = model(image)
         imshow(image,y)
 
-
+# Displays the batch
 def imshow(image, mask):
     image = image / 2 + 0.5
     mask = mask / 2 + 0.5

@@ -1,3 +1,4 @@
+import os
 import torch 
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -6,14 +7,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataset import SegDataset
 from network import SegNet
+import cv2
 from train import train_model, test_model
-
+import argparse
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-train", type=bool, default=False)
+    parser.add_argument("-epochs", type=int, default = 1)
+    args = parser.parse_args()
+
     # NEEDED VARIABLES FOR TRAINING
     BATCH_SIZE = 16
-    EPOCHS = 3
+    EPOCHS = args.epochs
     IMAGE_SIZE = 256
     NUM_WORKERS = 4
     PIN_MEM = True
@@ -23,6 +30,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
     torch.cuda.empty_cache()
     
+
     # Check for GPU
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -30,11 +38,18 @@ if __name__ == "__main__":
     image_path = "/mnt/d/dataset/LanesBerkleyBDK/images/bdd100k/images/100k/train/" 
     mask_path = "/mnt/d/dataset/LanesBerkleyBDK/map/bdd100k/drivable_maps/color_labels/train/"
 
+    # Path of video
+    video_path = "./videos/driving_footage.mp4"
 
-
+    # Preprocess for video
+    video_preprocess = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Resize((IMAGE_SIZE,IMAGE_SIZE)),
+        transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
+        ])
+    
     # PREPROCESSING FOR IMAGES 
     preprocess = transforms.Compose([
-
         transforms.ToTensor(),
         transforms.Resize((IMAGE_SIZE,IMAGE_SIZE)),
         # transforms.Normalize((0.485, 0.456, 0.406),(0.485, 0.456, 0.406)),
@@ -54,18 +69,16 @@ if __name__ == "__main__":
 
     # Load the model & Optimizer
     model = SegNet() 
-
-
     optimizer = torch.optim.Adam(model.parameters(), lr =1e-5)
 
 
 
-    # Train Model 
-    # train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS, True)
-
-    # Test model on batch
-    test_model(model, train_loader, device)
-
-
-
+    if args.train:
+        print("Train Mode.")
+        # Train Model 
+        train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS)
+    else:
+        print("Test Mode")
+        # Test model on batch
+        test_model(model, train_loader, device)
 
