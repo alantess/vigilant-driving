@@ -7,9 +7,22 @@ Deep Learning on the road.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
 # SEGNET 
-
+## Test mode:
+- Run main.py. **MUST** have a saved model ready.
+```sh
+$ cd vigilant-driving/segnet
+$ python main.py 
+```
+## Training Mode
+- Use "-train" to set to training mode.
+- Use "-epochs" to set the training epochs. Default is set to 1.
+```sh
+$ cd vigilant-driving/segnet
+$ mkdir models
+$ python main.py -train True -epochs 10
+```
 ## Visuals
-
+![](etc/model_lanes.gif.gif)
 
 # SPEED
 ## Test mode:
@@ -56,7 +69,7 @@ model.save()
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
         ├──train_pred.txt   #  Prediction on the testing set
-		└── etc									# Holds  images, gif, random files 
+    ├── etc 	            # Images, gifs , random files, etc.
 
 
 ------
