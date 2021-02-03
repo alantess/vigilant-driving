@@ -74,6 +74,8 @@ model.save()
     └── Etc               #  Random Files, Images, Gifs
 
 
+# Release 
+- [Download](https://github.com/alantess/vigilant-driving/releases) Models
 ------
 
 # License
