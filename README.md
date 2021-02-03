@@ -22,7 +22,7 @@ $ mkdir models
 $ python main.py -train True -epochs 10
 ```
 ## Visuals
-<img src="original_driving_vid.gif" alt="actual" width="600"/>
+![](etc/original_driving_vid.gif)
 
 # SPEED
 ## Test mode:
