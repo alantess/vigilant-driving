@@ -15,7 +15,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-train", type=bool, default=False)
-    parser.add_argument("-epochs", type=int, default = 1)
+    parser.add_argument("-epochs", type=int, default = 3)
     args = parser.parse_args()
 
     # NEEDED VARIABLES FOR TRAINING

@@ -28,8 +28,8 @@ $ python main.py -train True -epochs 1000
 ```
 
 ## Model Interpretability 
-<img src="actual.jpg" alt="actual" width="600"/>
-<img src="interpret.jpg" alt="interpet" width="600"/>
+<img src="etc/actual.jpg" alt="actual" width="600"/>
+<img src="etc/interpret.jpg" alt="interpet" width="600"/>
 
 ## Important notes
 - For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
@@ -56,6 +56,8 @@ model.save()
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
         ├──train_pred.txt   #  Prediction on the testing set
+		└── etc									# Holds  images, gif, random files 
+
 
 ------
 
