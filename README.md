@@ -15,7 +15,7 @@ $ python main.py
 ```
 ## Training Mode
 - Use "-train" to set to training mode.
-- Use "-epochs" to set the training epochs. Default is set to 1.
+- Use "-epochs" to set the training epochs. Default is set to 3.
 ```sh
 $ cd vigilant-driving/segnet
 $ mkdir models
