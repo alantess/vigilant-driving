@@ -27,8 +27,8 @@ Drivable maps dataset can be found [here](https://bdd-data.berkeley.edu/)
 
 |  LANES | COLOR   |
 |:-:|---|
-| DIRECT  | RED  |
-| ALTERNAT  |  GREEN |
+| Direct  | 🔴  |
+| Alternative  |  🟢 |
 
 ![](etc/original_driving_vid.gif)
 ![](etc/model_lanes.gif)
