@@ -1,5 +1,5 @@
 # Vigilant Driving 
-Predicts the speed of the car from a video. 
+Deep Learning on the road.
 ### Requirements
 
 - Dataset needed can be found [here](https://github.com/commaai/speedchallenge/tree/master/data)
