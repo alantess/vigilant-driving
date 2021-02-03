@@ -17,7 +17,7 @@ class SegDataset(Dataset):
         self.mask_path = mask_path
 
     def __len__(self):
-        return len(self.mask) // 7 
+        return len(self.mask) // 6 
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -33,16 +33,17 @@ class SegDataset(Dataset):
         ####################################################################
         image = cv2.imread(image_path)
         mask = cv2.imread(self.mask[idx], cv2.IMREAD_GRAYSCALE)
-        image = cv2.normalize(image, None, 0, 1, cv2.NORM_MINMAX, cv2.CV_32F)
-        mask = cv2.normalize(mask, None, 0, 1, cv2.NORM_MINMAX, cv2.CV_32F)
-        mask = np.expand_dims(mask,2)
 
         # Transforms images and mask 
         if self.transform:
-            image = self.transform(image)
-            mask = self.transform(mask).squeeze(0)
-            mask[mask > 0.5] = 1.0
+            normalize = torchvision.transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
 
+            image = self.transform(image)
+            mask = self.transform(mask).squeeze(0) 
+            mask = mask * 10
+            mask[mask>2] = 2.0
+            image = normalize(image)
+            
 
         return image, mask
 

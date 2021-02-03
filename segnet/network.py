@@ -8,7 +8,7 @@ class SegNet(nn.Module):
     def __init__(self, chkpt_dir="models"):
         super(SegNet,self).__init__()
         self.file = os.path.join(chkpt_dir, "deeplab_weights_driving")
-        self.base_model = torchvision.models.segmentation.deeplabv3_resnet101(False, num_classes=2)
+        self.base_model = torchvision.models.segmentation.deeplabv3_resnet101(False, num_classes=3)
 
     def forward(self,x):
         return self.base_model(x)['out']

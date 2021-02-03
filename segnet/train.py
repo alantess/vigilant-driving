@@ -43,6 +43,7 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
             total_loss += loss.item()
             loop.set_postfix(loss=loss.item())
 
+
         print(f"EPOCH {epoch}: TOTAL LOSS: {total_loss:.5f}")
     # If the loss is the lowest then save the model. 
         if total_loss < best_score:
@@ -88,3 +89,5 @@ def display(image, mask):
     plt.imshow(mask[1].permute(1,2,0), cmap='hot', alpha=0.5)
     # plt.savefig("test.jpg")
     plt.show()
+
+
