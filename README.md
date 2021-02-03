@@ -23,6 +23,8 @@ $ python main.py -train True -epochs 10
 ```
 ## Visuals
 ![](etc/original_driving_vid.gif)
+![](etc/etc/model_lanes.gif)
+
 
 # SPEED
 ## Test mode:
@@ -69,7 +71,7 @@ model.save()
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
         ├──train_pred.txt   #  Prediction on the testing set
-    ├── etc 	         # Images, gifs , random files, etc.
+    └── Etc               #  Random Files, Images, Gifs
 
 
 ------
