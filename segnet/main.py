@@ -8,10 +8,12 @@ from dataset import SegDataset
 from network import SegNet
 from train import train_model, test_model
 
+
+
 if __name__ == "__main__":
     # NEEDED VARIABLES FOR TRAINING
     BATCH_SIZE = 16
-    EPOCHS = 15
+    EPOCHS = 3
     IMAGE_SIZE = 256
     NUM_WORKERS = 4
     PIN_MEM = True
@@ -52,15 +54,17 @@ if __name__ == "__main__":
 
     # Load the model & Optimizer
     model = SegNet() 
+
+
     optimizer = torch.optim.Adam(model.parameters(), lr =1e-5)
 
 
-    #
-    # Train Model 
-    train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS, True)
 
-    # Test model
-    # test_model(model, train_loader, loss_fn, device)
+    # Train Model 
+    # train_model(model,optimizer,train_loader, loss_fn, device, EPOCHS, True)
+
+    # Test model on batch
+    test_model(model, train_loader, device)
 
 
 

@@ -55,39 +55,29 @@ def train_model(model, optimizer, data_loader,loss_fn,device, epochs,load_model=
     print("Finished.")
 
 
-def test_model(model, data_loader,loss_fn, device):
-    scaler = torch.cuda.amp.GradScaler()
-    model = model.to(device)
+def test_model(model, data_loader, device):
+    model.to(device)
     model.load()
-
-    total_loss = 0.0
+    image, mask = next(iter(data_loader))
+    image = image.to(device)
+    msk = mask.to(device)
     with torch.no_grad():
-        for i, data in enumerate(tqdm(data_loader)):
-            image, mask = data 
-            image = image.to(device, dtype=torch.float)
-            mask = mask.to(device, dtype=torch.long)
-
-            with torch.cuda.amp.autocast():
-                pred = model(image)
-                loss = loss_fn(pred, mask)
+        y = model(image)
+        imshow(image,y)
 
 
-            total_loss += loss.item()
-
-    print(f"Total loss: {total_loss:.5f}")
-
-
-
-
-def display(image, mask):
-    image = image.cpu()
-    mask = mask.detach().cpu()
-
+def imshow(image, mask):
     image = image / 2 + 0.5
-    mask = mask / 2  + 0.5
-    plt.imshow(image[1].permute(1,2,0), cmap='jet')
-    plt.imshow(mask[1].permute(1,2,0), cmap='hot', alpha=0.5)
-    # plt.savefig("test.jpg")
-    plt.show()
+    mask = mask / 2 + 0.5
+    image = image.cpu()
+    mask = mask.argmax(1).detach().cpu()
+    size = image.size(0)
+    plt.ion()
+    for i in range(size):
+        plt.imshow(image[i].permute(1,2,0), cmap='gray')
+        plt.imshow(mask[i], cmap='jet', alpha=0.5)
+        plt.pause(0.001)
+        plt.show()
+    
 
 
