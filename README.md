@@ -23,7 +23,7 @@ $ python main.py -train True -epochs 10
 ```
 ## Visuals
 ![](etc/original_driving_vid.gif)
-![](etc/etc/model_lanes.gif)
+![](etc/model_lanes.gif)
 
 
 # SPEED
