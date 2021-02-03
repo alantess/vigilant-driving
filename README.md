@@ -6,7 +6,12 @@ Predicts the speed of the car from a video.
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
-# Run 
+# SEGNET 
+
+## Visuals
+
+
+# SPEED
 ## Test mode:
 - Run main.py. **MUST** have a saved model ready.
 ```sh
