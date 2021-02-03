@@ -22,7 +22,7 @@ $ mkdir models
 $ python main.py -train True -epochs 10
 ```
 ## Visuals
-![](etc/model_lanes.gif.gif)
+<img src="original_driving_vid.gif" alt="actual" width="600"/>
 
 # SPEED
 ## Test mode:
@@ -69,7 +69,7 @@ model.save()
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
         ├──train_pred.txt   #  Prediction on the testing set
-    ├── etc 	            # Images, gifs , random files, etc.
+    ├── etc 	         # Images, gifs , random files, etc.
 
 
 ------
