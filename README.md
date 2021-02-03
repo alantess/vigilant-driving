@@ -21,7 +21,15 @@ $ cd vigilant-driving/segnet
 $ mkdir models
 $ python main.py -train True -epochs 10
 ```
+### Dataset
+Drivable maps dataset can be found [here](https://bdd-data.berkeley.edu/)
 ## Visuals
+
+|  LANES | COLOR   |
+|:-:|---|
+| DIRECT  | RED  |
+| ALTERNAT  |  GREEN |
+
 ![](etc/original_driving_vid.gif)
 ![](etc/model_lanes.gif)
 
