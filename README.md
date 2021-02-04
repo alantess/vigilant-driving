@@ -1,8 +1,6 @@
 # Vigilant Driving 
 Deep Learning on the road.
 ### Requirements
-
-- Dataset needed can be found [here](https://github.com/commaai/speedchallenge/tree/master/data)
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
@@ -35,6 +33,7 @@ Drivable maps dataset can be found [here](https://bdd-data.berkeley.edu/)
 
 
 # SPEED
+- Dataset needed can be found [here](https://github.com/commaai/speedchallenge/tree/master/data)
 ## Test mode:
 - Run main.py. **MUST** have a saved model ready.
 ```sh
