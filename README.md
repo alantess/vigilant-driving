@@ -6,7 +6,9 @@ Deep Learning on the road.
 
 # Depth
  - Model: U-Net with a Resnet50 backbone
+ - [Dataset](http://apolloscape.auto/stereo.html)
 ## Visuals
+![](etc/depth_gif.gif)
 
 # SEGNET 
 ## Test mode:
