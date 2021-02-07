@@ -56,7 +56,12 @@ model.save()
 # Directory Structure
 ------
     .
-    ├── Deoth               #  Segmentation on lanes
+     ├── Segnet             # Segmentation on lanes
+        ├── dataset.py      #  Class to hold for the dataset
+        ├── main.py         #  Main controller
+        ├── network.py      #  Segmentation model
+        ├── train.py        #  Train and test function
+    ├── Depth               #  Segmentation on lanes
         ├── dataset.py      #  Class to hold for the dataset
         ├── main.py         #  Main controller
         ├── network.py      #  U Net 
