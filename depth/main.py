@@ -98,7 +98,7 @@ if __name__ == '__main__':
     SIZE = 256
     PIN_MEM = True
     WORKERS = 2
-    EPOCHS = 40
+    EPOCHS = 7
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(),  lr=1e-5)
 
     # Training
-    train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS)
+    train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS, True)
     # Training for u_net
 
     # img,_,_,y = next(iter(train_loader))
