@@ -7,9 +7,7 @@ Deep Learning on the road.
 # Depth
  - Model: U-Net with a Resnet50 backbone
  - [Dataset](http://apolloscape.auto/stereo.html)
-## Visuals
-![](etc/depth_gif.gif)
-
+ 
 # SEGNET 
 ## Test mode:
 - Run main.py. **MUST** have a saved model ready.
@@ -27,16 +25,6 @@ $ python main.py -train True -epochs 10
 ```
 ### Dataset
 Drivable maps dataset can be found [here](https://bdd-data.berkeley.edu/)
-## Visuals
-
-|  LANES | COLOR   |
-|:-:|---|
-| Direct  | 🔴  |
-| Alternative  |  🟢 |
-
-![](etc/original_driving_vid.gif)
-![](etc/model_lanes.gif)
-
 
 # SPEED
 - Dataset needed can be found [here](https://github.com/commaai/speedchallenge/tree/master/data)
@@ -54,11 +42,6 @@ $ cd vigilant-driving/speed
 $ mkdir models
 $ python main.py -train True -epochs 1000
 ```
-
-## Model Interpretability 
-<img src="etc/actual.jpg" alt="actual" width="600"/>
-<img src="etc/interpret.jpg" alt="interpet" width="600"/>
-
 ## Important notes
 - For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
 ```python
@@ -85,6 +68,21 @@ model.save()
         ├──train_pred.txt   #  Prediction on the testing set
     └── Etc               #  Random Files, Images, Gifs
 
+
+# Visuals
+### Lanes 
+|  LANES | COLOR   |
+|:-:|---|
+| Direct  | 🔴  |
+| Alternative  |  🟢 |
+
+![](etc/original_driving_vid.gif)
+![](etc/model_lanes.gif)
+### Depth
+![](etc/depth_gif.gif)
+### Model Interpretability 
+<img src="etc/actual.jpg" alt="actual" width="600"/>
+<img src="etc/interpret.jpg" alt="interpet" width="600"/>
 
 # Release 
 - [Download](https://github.com/alantess/vigilant-driving/releases) Models
