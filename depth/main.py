@@ -2,11 +2,12 @@ import torch
 import torch.nn as nn
 import numpy as np
 from dataset import DepthDataset
-from network import CarSegNet
+from network import *
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+
 
 
 def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, load_model=False):
@@ -23,9 +24,9 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         loop = tqdm(train_loader)
         val_loop = tqdm(val_loader)
         total_loss = 0
-        for i , (image, _ , target, _) in enumerate(loop):
+        for i , (image, _ , _,target) in enumerate(loop):
             image = image.to(device, dtype=torch.float32)
-            target = target.to(device,dtype=torch.long)
+            target = target.to(device,dtype=torch.float32)
 
             for p in model.parameters():
                 p.grad = None
@@ -46,9 +47,9 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         print("VALIDATION:")
         with torch.no_grad():
             val_loss = 0
-            for j , (input, _ , y, _) in enumerate(val_loop):
+            for j , (input, _ , _, y) in enumerate(val_loop):
                 input = input.to(device, dtype=torch.float32)
-                y = y.to(device, dtype=torch.long)
+                y = y.to(device, dtype=torch.float32)
 
                 with torch.cuda.amp.autocast():
                     prediction = model(input)
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     SIZE = 256
     PIN_MEM = True
     WORKERS = 2
-    EPOCHS = 10
+    EPOCHS = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -122,20 +123,25 @@ if __name__ == '__main__':
     val_loader = DataLoader(valset, batch_size=BATCH,num_workers=WORKERS,pin_memory=PIN_MEM)
 
     # Model
-    model = CarSegNet()
+    model = GTRes()
 
     # Loss and optimizer
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(),  lr=1e-5)
 
     # Training
-    train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS,True)
+    train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS)
+    # Training for u_net
 
+    # img,_,_,y = next(iter(train_loader))
+    # with torch.no_grad():
+    #     out = model(img)
+    #     print(y.size())
+    #     print(out.size())
+    # print(y.size())
     # model.load()
     # model.eval()
-    # img , _ ,_ ,_ = next(iter(val_loader))
     #
     # with torch.no_grad():
     #     output = model(img).argmax(1)
-    #
-    # imshow(img[0], output[0].detach().numpy())
+    # imshow(img[3], output[3].detach().numpy())

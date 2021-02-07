@@ -36,12 +36,16 @@ class DepthDataset(Dataset):
 
         if self.transform:
             normalize = torchvision.transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
+            # norm_pos = torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.2,1,1))
             grayscale = torchvision.transforms.Grayscale()
             camera = normalize(self .transform(camera))
             bg_mask = grayscale(self.transform(bg_mask)).squeeze(0)
             fg_mask = grayscale(self.transform(fg_mask)).squeeze(0)
-            disparity = grayscale(self.transform(disparity)).squeeze(0)
+            disparity = normalize(self.transform(disparity))
+            disparity = grayscale(disparity)
 
+        # disparity[disparity < -1.5] = 3.0
+        # disparity[disparity < -0.5] = 4.0
         fg_mask[fg_mask>0.5] = 1.0
         bg_mask[bg_mask>0.5] = 1.0
 
