@@ -131,4 +131,4 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(),  lr=1e-5)
 
     # Uncomment the line below to begin training.
-    # train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS,True)
+    # train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS)
