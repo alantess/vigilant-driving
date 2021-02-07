@@ -11,6 +11,17 @@ from torch.utils.data import DataLoader
 
 
 def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, load_model=False):
+    """
+    :param model: Input model 
+    :param train_loader: Training Set  
+    :param val_loader: Validation Set 
+    :param optimizer: Optimizer  
+    :param loss_fn: Loss function 
+    :param device: GPU or CPU 
+    :param epochs: Training iteration 
+    :param load_model: Loads saved model 
+    :return: None 
+    """
     scaler = torch.cuda.amp.GradScaler()
     best_score = np.inf
     model = model.to(device)
@@ -25,17 +36,19 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         val_loop = tqdm(val_loader)
         total_loss = 0
         for i , (image, _ , _,target) in enumerate(loop):
+            # Set input and target to device
             image = image.to(device, dtype=torch.float32)
             target = target.to(device,dtype=torch.float32)
-
+            # clear gradients
             for p in model.parameters():
                 p.grad = None
 
-
+            # Forward Pass
             with torch.cuda.amp.autocast():
                 pred = model(image)
                 loss = loss_fn(pred, target)
 
+            # Backward Pass 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -43,7 +56,7 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
             total_loss += loss.item()
             loop.set_postfix(loss=loss.item())
 
-
+        # Check performance on validation set
         print("VALIDATION:")
         with torch.no_grad():
             val_loss = 0
@@ -57,7 +70,8 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
 
                 val_loss += v_loss.item()
                 val_loop.set_postfix(val_loss=v_loss.item())
-
+        
+        # Saves model based on validation loss
         if val_loss < best_score:
             best_score = val_loss
             model.save()
@@ -65,19 +79,6 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
 
         print(f"EPOCH {epoch}: {total_loss:.5f}")
         print(f"Validation Loss: {val_loss}")
-
-
-
-
-def imshow(img,mask):
-    # resize = transforms.Resize((960,3180))
-    # img = resize(img)
-    # mask = resize(mask)
-    img = img / 2 + 0.5
-    plt.title("WORKING")
-    plt.imshow(img.permute(1,2,0), cmap='gray')
-    plt.imshow(mask, cmap='CMRmap', alpha=0.5)
-    plt.show()
 
 if __name__ == '__main__':
     # PATHS NEEDED FOR TRAINING SET
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     # Variables Needed for training
     SEED = 99
-    BATCH = 12
+    BATCH = 3
     SIZE = 256
     PIN_MEM = True
     WORKERS = 2
@@ -123,25 +124,11 @@ if __name__ == '__main__':
     val_loader = DataLoader(valset, batch_size=BATCH,num_workers=WORKERS,pin_memory=PIN_MEM)
 
     # Model
-    model = GTRes()
+    model = URes()
 
     # Loss and optimizer
     loss_fn = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(),  lr=1e-5)
 
-    # Training
-    train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS, True)
-    # Training for u_net
-
-    # img,_,_,y = next(iter(train_loader))
-    # with torch.no_grad():
-    #     out = model(img)
-    #     print(y.size())
-    #     print(out.size())
-    # print(y.size())
-    # model.load()
-    # model.eval()
-    #
-    # with torch.no_grad():
-    #     output = model(img).argmax(1)
-    # imshow(img[3], output[3].detach().numpy())
+    # Uncomment the line below to begin training.
+    # train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS,True)

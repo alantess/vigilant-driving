@@ -5,11 +5,11 @@ import torch.nn.functional as F
 from torchvision import models
 
 
-# Encoder - Decoder MODEL
-class GTRes(nn.Module):
+# Encoder - Decoder for the disparity
+class URes(nn.Module):
     def __init__(self, n_channels=1, chkpt="models"):
-        super(GTRes, self).__init__()
-        self.file = os.path.join(chkpt, "resnet_encoder_decoder")
+        super(URes, self).__init__()
+        self.file = os.path.join(chkpt, "resnet_encoder_decoder_2")
         resnet = models.resnet50(True)
         modules = list(resnet.children())
         # Original Image
@@ -69,7 +69,7 @@ class GTRes(nn.Module):
         # L1
         x = self.upsample(x)
         x = torch.cat([x, original], dim=1)
-        x = F.selu(self.conv1_up(x))
+        x = self.conv1_up(x)
 
         return x
 
@@ -80,6 +80,7 @@ class GTRes(nn.Module):
         self.load_state_dict(torch.load(self.file))
 
 
+# Used for foreground and background segmentation
 class CarSegNet(nn.Module):
     def __init__(self, chkpt="models"):
         super(CarSegNet, self).__init__()
@@ -96,18 +97,3 @@ class CarSegNet(nn.Module):
         self.load_state_dict(torch.load(self.file))
 
 
-class UNet(nn.Module):
-    def __init__(self, chkpt="models"):
-        super(UNet, self).__init__()
-        self.model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
-                                    in_channels=3, out_channels=1, init_features=32, pretrained=False)
-        self.file = os.path.join(chkpt, "u_net_depth_model")
-
-    def forward(self, x):
-        return self.model(x)
-
-    def save(self):
-        torch.save(self.state_dict(), self.file)
-
-    def load(self):
-        self.load_state_dict(torch.load(self.file))

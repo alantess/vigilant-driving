@@ -4,6 +4,10 @@ Deep Learning on the road.
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
+# Depth
+ - Model: U-Net with a Resnet50 backbone
+## Visuals
+
 # SEGNET 
 ## Test mode:
 - Run main.py. **MUST** have a saved model ready.
@@ -67,11 +71,12 @@ model.save()
 # Directory Structure
 ------
     .
-    ├── Segnet              # Segmentation on lanes
+    torchvision.transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
+    ├── Deoth              # Segmentation on lanes
         ├── dataset.py      #  Class to hold for the dataset
         ├── main.py         #  Main controller
-        ├── network.py      #  Segmentation model
-        ├── train.py        #  Train and test function
+        ├── network.py      # U Net 
+        ├── visual.py        #  Test and visualize the model
     └── Speed               #  Speed Prediction
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
