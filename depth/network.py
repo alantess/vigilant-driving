@@ -1,13 +1,64 @@
 import os
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
+from gtrxl_torch.gtrxl_torch import GTrXL
+
+
+class DisparityNet(nn.Module):
+    def __init__(self, chkpt="models"):
+        """
+        This network is primarily for stereo vision ( TWO IMAGES )
+        Input: Camera A, Camera B
+        Output: Disparity
+        """
+        super(DisparityNet, self).__init__()
+        self.file = os.path.join(chkpt, "disparity_net")
+        self.u_net = URes()
+        # Combines left and right camera
+        self.base = nn.Sequential(
+            nn.Conv2d(3, 64, 2, 2),
+            nn.SELU(),
+            nn.Conv2d(64, 64, 1, 1),
+            nn.SELU(),
+        )
+        # Deconvolutions and upsamples the concatenated images
+        self.deconv = nn.Sequential(
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Conv2d(128,64,1,2),
+            nn.SELU(),
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Conv2d(64,32,1,1),
+            nn.SELU(),
+            nn.Conv2d(32,3,1,1),
+            nn.SELU()
+        )
+
+    def forward(self, a, b):
+        a = self.base(a)
+        b = self.base(b)
+        x = torch.cat([a, b], dim=1)
+        x = self.deconv(x)
+        x = self.u_net(x)
+        return x
+
+    def save(self):
+        torch.save(self.state_dict(), self.file)
+
+    def load(self):
+        self.load_state_dict(torch.load(self.file))
 
 
 # Encoder - Decoder for the disparity
 class URes(nn.Module):
     def __init__(self, n_channels=1, chkpt="models"):
+        """
+        This network is used primarily for depth
+        Input: Image
+        Output: Depth
+        """
         super(URes, self).__init__()
         self.file = os.path.join(chkpt, "resnet_encoder_decoder_2")
         resnet = models.resnet50(True)
@@ -95,5 +146,3 @@ class CarSegNet(nn.Module):
 
     def load(self):
         self.load_state_dict(torch.load(self.file))
-
-

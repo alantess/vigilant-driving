@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 from dataset import DepthDataset
 from network import *
+from visual import *
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -35,9 +36,10 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         loop = tqdm(train_loader)
         val_loop = tqdm(val_loader)
         total_loss = 0
-        for i , (image, _ , _,target) in enumerate(loop):
+        for i , (image,image_b, _ , _,target) in enumerate(loop):
             # Set input and target to device
             image = image.to(device, dtype=torch.float32)
+            image_b = image_b.to(device, dtype=torch.float32)
             target = target.to(device,dtype=torch.float32)
             # clear gradients
             for p in model.parameters():
@@ -45,7 +47,7 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
 
             # Forward Pass
             with torch.cuda.amp.autocast():
-                pred = model(image)
+                pred = model(image,image_b)
                 loss = loss_fn(pred, target)
 
             # Backward Pass 
@@ -60,12 +62,13 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         print("VALIDATION:")
         with torch.no_grad():
             val_loss = 0
-            for j , (input, _ , _, y) in enumerate(val_loop):
+            for j , (input,input_b, _ , _, y) in enumerate(val_loop):
                 input = input.to(device, dtype=torch.float32)
+                input_b = input_b.to(device, dtype=torch.float32)
                 y = y.to(device, dtype=torch.float32)
 
                 with torch.cuda.amp.autocast():
-                    prediction = model(input)
+                    prediction = model(input, input_b)
                     v_loss = loss_fn(prediction, y)
 
                 val_loss += v_loss.item()
@@ -80,22 +83,51 @@ def train(model, train_loader, val_loader, optimizer, loss_fn, device, epochs, l
         print(f"EPOCH {epoch}: {total_loss:.5f}")
         print(f"Validation Loss: {val_loss}")
 
+def test(model,data_loader,device,directory):
+    """
+    :param model:
+    :param data_loader:
+    :param device:
+    :return:
+    """
+    model.to(device)
+    model.load()
+    with torch.no_grad():
+        count = 0
+        loop = tqdm(data_loader)
+        for i, (img_a, img_b, _, _, _) in enumerate(loop):
+            img_a = img_a.to(device, dtype=torch.float32)
+            img_b = img_b.to(device, dtype=torch.float32)
+
+            disparity = model(img_a, img_b)
+
+            imshow_grid(img_a,img_b, disparity, directory, count)
+            count += 1
+
+
 if __name__ == '__main__':
     # PATHS NEEDED FOR TRAINING SET
     camera_path = "D:\\dataset\\depth_perception\\train\\stereo_train_001\\camera_5"
+    camera_b_path =  "D:\\dataset\\depth_perception\\train\\stereo_train_001\\camera_6"
     fg_path = "D:\\dataset\\depth_perception\\train\\stereo_train_001\\fg_mask"
     bg_path = 'D:\\dataset\\depth_perception\\train\\stereo_train_001\\bg_mask'
     disparity_path = "D:\\dataset\\depth_perception\\train\\stereo_train_001\\disparity"
 
     # PATH NEEDED FOR VALIDATION SET
     val_camera_path = "D:\\dataset\\depth_perception\\val\\stereo_train_002\\camera_5"
+    val_camera_b_path = "D:\\dataset\\depth_perception\\val\\stereo_train_002\\camera_6"
     val_fg_path = "D:\\dataset\\depth_perception\\val\\stereo_train_002\\fg_mask"
     val_bg_path = 'D:\\dataset\\depth_perception\\val\\stereo_train_002\\bg_mask'
     val_disparity_path = "D:\\dataset\\depth_perception\\val\\stereo_train_002\\disparity"
 
+    # PATHS NEEDED FOR TEST SET
+    test_camera_path = "D:\\dataset\\depth_perception\\test\\test\\camera_5"
+    test_camera_b_path = "D:\\dataset\\depth_perception\\test\\test\\camera_6"
+    directory = "D:\\VIDEOS\\disparity\\"
+
     # Variables Needed for training
     SEED = 99
-    BATCH = 3
+    BATCH = 12
     SIZE = 256
     PIN_MEM = True
     WORKERS = 2
@@ -116,15 +148,20 @@ if __name__ == '__main__':
     Returns Camera, background mask, foreground mask (CARS), and disparity
     """
     # Train Loader
-    trainset = DepthDataset(camera_path, bg_path, fg_path, disparity_path, preprocess)
+    trainset = DepthDataset(camera_path,camera_b_path ,bg_path, fg_path, disparity_path, preprocess)
     train_loader = DataLoader(trainset, batch_size=BATCH, num_workers=WORKERS, pin_memory=PIN_MEM)
 
     # Validatin Loader
-    valset = DepthDataset(val_camera_path,val_bg_path,val_fg_path,val_disparity_path,preprocess,True)
+    valset = DepthDataset(val_camera_path,val_camera_b_path,val_bg_path,val_fg_path,val_disparity_path,preprocess,True)
     val_loader = DataLoader(valset, batch_size=BATCH,num_workers=WORKERS,pin_memory=PIN_MEM)
 
+    # Test Loader
+    testset = DepthDataset(test_camera_path, test_camera_path, val_bg_path, val_fg_path, val_disparity_path, preprocess,True)
+    test_loader = DataLoader(testset, batch_size=1, num_workers=WORKERS, pin_memory=PIN_MEM)
+
     # Model
-    model = URes()
+    model = DisparityNet()
+
 
     # Loss and optimizer
     loss_fn = nn.MSELoss()
@@ -132,3 +169,6 @@ if __name__ == '__main__':
 
     # Uncomment the line below to begin training.
     # train(model,train_loader,val_loader,optimizer,loss_fn,device,EPOCHS)
+
+    # Uncomment to run on the test set
+    # test(model, test_loader, device,directory)
