@@ -85,10 +85,9 @@ model.save()
 ### Depth & Disparity
 ![](etc/depth_gif.gif)
 ![](etc/disparitygif.gif)
-<img src="etc/img0.jpg" alt="actual" width="150"/>
 ### Speed (Model Interpretability)  
-<img src="etc/actual.jpg" alt="actual" width="300"/>
-<img src="etc/interpret.jpg" alt="interpet" width="300"/>
+<img src="etc/actual.jpg" alt="actual" width="200"/>
+<img src="etc/interpret.jpg" alt="interpet" width="200"/>
 
 # Release 
 - [Download](https://github.com/alantess/vigilant-driving/releases) Models
