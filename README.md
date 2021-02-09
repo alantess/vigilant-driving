@@ -80,6 +80,11 @@ model.save()
 | Direct  | 🔴  |
 | Alternative  |  🟢 |
 
+|  ![](etc/original_driving_vid.gif) |  ![](etc/model_lanes.gif) |
+|:-:|:-:|
+|   |   |
+|   |   |
+
 ![](etc/original_driving_vid.gif)
 ![](etc/model_lanes.gif)
 ### Depth & Disparity
