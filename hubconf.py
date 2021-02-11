@@ -1,5 +1,5 @@
 dependencies = ["torch"]
-master = ["main"]
+
 
 import torch
 
