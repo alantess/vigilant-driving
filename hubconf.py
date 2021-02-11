@@ -1,4 +1,4 @@
-dependencies = ["torch"]
+dependencies = ["torch","captum"]
 
 
 import torch
