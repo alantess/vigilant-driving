@@ -16,7 +16,7 @@ def segnet(pretrained=False, **kwargs):
     model = SegNet(**kwargs)
 
     if pretrained:
-        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.3/deeplab_weights_driving"
+        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.5/deeplab_weights_driving"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
 
@@ -32,7 +32,7 @@ def vidresnet(pretrained=False, **kwargs):
     model = VidResnet(**kwargs)
 
     if pretrained:
-        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.3/resvid_net_gru_weights"
+        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.5/resvid_net_gru_weights"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
 
@@ -47,7 +47,7 @@ def ures(pretrained=False, **kwargs):
     """
     model = URes(**kwargs)
     if pretrained:
-        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.3/resnet_encoder_decoder_2"
+        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.5/resnet_encoder_decoder_2"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
 
@@ -61,7 +61,7 @@ def disparitynet(pretrained=False, **kwargs):
 
     model = DisparityNet(**kwargs)
     if pretrained:
-        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.3/disparity_net"
+        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.5/disparity_net"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
 
