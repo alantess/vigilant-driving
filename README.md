@@ -87,7 +87,13 @@ model.save()
 
 
 # Release 
-- [Download](https://github.com/alantess/vigilant-driving/releases) Models
+- Available Models: ['disparitynet', 'segnet', 'ures', 'vidresnet']
+- Please use the latest release to download models: "alantess/vigilant-driving:main/{latest_release}"
+```python
+import torch
+repo = 'alantess/vigilant-driving:main/1.0.5'
+model = torch.hub.load(repo, 'segnet', pretrained=True)
+```
 ------
 
 # License
