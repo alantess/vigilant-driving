@@ -16,7 +16,7 @@ def segnet(pretrained=False, **kwargs):
     model = SegNet(**kwargs)
 
     if pretrained:
-        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.2/deeplab_weights_driving"
+        checkpoint = "https://github.com/alantess/vigilant-driving/releases/download/1.0.3/deeplab_weights_driving"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
 
