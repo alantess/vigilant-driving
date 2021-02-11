@@ -1,10 +1,8 @@
 import os
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-from gtrxl_torch.gtrxl_torch import GTrXL
 
 
 class DisparityNet(nn.Module):
