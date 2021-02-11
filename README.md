@@ -88,7 +88,8 @@ model.save()
 
 # Release 
 - Available Models: ['disparitynet', 'segnet', 'ures', 'vidresnet']
-- Please use the latest release to download models: *alantess/vigilant-driving:main/{**latest_release**}*
+- Please use the latest release to download models: 
+    - alantess/vigilant-driving:main/{**latest_release**}
 ```python
 import torch
 repo = 'alantess/vigilant-driving:main/1.0.5'
