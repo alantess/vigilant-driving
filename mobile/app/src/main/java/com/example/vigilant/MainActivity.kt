@@ -1,11 +1,13 @@
 package com.example.vigilant
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import android.view.OrientationEventListener
 import android.view.Surface
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -16,17 +18,28 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.visuals.*
+import kotlinx.android.synthetic.main.visuals.view.*
+import org.pytorch.IValue
 import org.pytorch.Module
+import org.pytorch.Tensor
+import org.pytorch.torchvision.TensorImageUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.FloatBuffer
+import java.util.concurrent.ExecutorService
+
 
 const val MODEL_NAME = "mobile_segnet.pt"
 
 class MainActivity : AppCompatActivity() {
     private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
     var module: Module? = null
-
+    private lateinit var cameraExecutor: ExecutorService
+    private var mInputTensor: Tensor? = null
+    private var outputImg: Tensor? = null
+    private var mInputTensorBuffer: FloatBuffer? = null
     //    Utilities for module loading
 
     fun assetFilePath(context: Context, assetName: String): String? {
@@ -59,6 +72,10 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
 
+        visuals.setOnClickListener {
+           setContentView(R.layout.visuals)
+        }
+
         cameraProviderFuture.addListener(Runnable {
             val cameraProvider = cameraProviderFuture.get()
             bindPreview(cameraProvider)
@@ -69,35 +86,17 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("UnsafeExperimentalUsageError")
     fun bindPreview(cameraProvider : ProcessCameraProvider) {
 
         val imageCapture = ImageCapture.Builder().build()
 
 
-        // Needed for model predictions
-        val imageAnalysis = ImageAnalysis.Builder()
-                .setTargetResolution(Size(1280,720))
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-
-        // Might be needed to change orientation from portrait to landscape
-        val orientationEventListener = object : OrientationEventListener(this as Context){
-            override fun onOrientationChanged(orientation: Int) {
-                val rotation : Int = when (orientation) {
-                    in 45..134 -> Surface.ROTATION_270
-                    in 135..224 -> Surface.ROTATION_180
-                    in 225..314 -> Surface.ROTATION_90
-                    else -> Surface.ROTATION_0
-                }
-                imageCapture.targetRotation = rotation
-            }
-  }
-        orientationEventListener.enable()
 
 
         // Preview needed for visuals (camera)
         var preview : Preview = Preview.Builder()
-                .setTargetRotation(Surface.ROTATION_270)
+            .setTargetRotation(Surface.ROTATION_0)
                 .build()
         //  Activates Back Camera
         var cameraSelector : CameraSelector = CameraSelector.Builder()
@@ -106,10 +105,65 @@ class MainActivity : AppCompatActivity() {
 
         preview.setSurfaceProvider(previewView.surfaceProvider)
 
-        // Retrieve Model Paths and loads it
-       val modulePATH: String = File(assetFilePath(this, MODEL_NAME)).absolutePath
-        module = Module.load(modulePATH)
+        // Might be needed to change orientation from portrait to landscape
+        val orientationEventListener = object : OrientationEventListener(this as Context){
+            override fun onOrientationChanged(orientation: Int) {
+                val rotation : Int = when (orientation) {
+                    in 45..134 -> Surface.ROTATION_0
+                    in 135..224 -> Surface.ROTATION_0
+                    in 225..314 -> Surface.ROTATION_0
+                    else -> Surface.ROTATION_0
+                }
+                imageCapture.targetRotation = rotation
 
+            }
+        }
+        orientationEventListener.enable()
+
+
+
+
+
+
+        // Needed for model predictions
+        val imageAnalysis = ImageAnalysis.Builder()
+            .setTargetResolution(Size(256,256))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetRotation(previewView.display.rotation)
+            .build()
+
+
+        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), ImageAnalysis.Analyzer { image ->
+            if(module == null){
+                // Retrieve Model Paths and loads it
+                val modulePATH: String = File(assetFilePath(this, MODEL_NAME)).absolutePath
+                module = Module.load(modulePATH)
+                Toast.makeText(applicationContext, "Module Loaded", Toast.LENGTH_LONG).show()
+            }
+            val rotationDegrees = image.imageInfo.rotationDegrees
+            // Allocate Memory for image
+            mInputTensorBuffer =
+                Tensor.allocateFloatBuffer(3 *256 * 256)
+            mInputTensor = Tensor.fromBlob(
+                mInputTensorBuffer,
+                longArrayOf(1, 3, 256,256)
+            )
+            // Turn image into Tensor
+            TensorImageUtils.imageYUV420CenterCropToFloatBuffer(
+                image.image, rotationDegrees,
+                256, 256,
+                TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                mInputTensorBuffer, 0)
+
+            // Commit a forward pass through the network (1x3x256x256)
+            outputImg = module?.forward(IValue.from(mInputTensor))?.toTensor()
+            Log.d("OUTPUT TENSOR", outputImg.toString())
+
+        })
+
+
+        cameraProvider.unbindAll()
 
         cameraProvider.bindToLifecycle(this as LifecycleOwner, cameraSelector, preview, imageCapture, imageAnalysis)
     }
