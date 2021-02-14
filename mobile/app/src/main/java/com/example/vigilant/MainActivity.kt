@@ -1,7 +1,9 @@
 package com.example.vigilant
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
@@ -30,18 +32,36 @@ import java.io.IOException
 import java.nio.FloatBuffer
 import java.util.concurrent.ExecutorService
 
-
 const val MODEL_NAME = "mobile_segnet.pt"
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
     var module: Module? = null
     private lateinit var cameraExecutor: ExecutorService
     private var mInputTensor: Tensor? = null
     private var outputImg: Tensor? = null
     private var mInputTensorBuffer: FloatBuffer? = null
-    //    Utilities for module loading
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        visuals.setOnClickListener {
+            setContentView(R.layout.visuals)
+            startActivity()
+        }
+    }
+    // Starts the camera
+    fun startActivity(){
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener(Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            bindPreview(cameraProvider)
+        }, ContextCompat.getMainExecutor(this))
+
+    }
+    // Retrieve Model path
     fun assetFilePath(context: Context, assetName: String): String? {
         val file = File(context.filesDir, assetName)
         try {
@@ -62,46 +82,20 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-
-
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
-
-        visuals.setOnClickListener {
-           setContentView(R.layout.visuals)
-        }
-
-        cameraProviderFuture.addListener(Runnable {
-            val cameraProvider = cameraProviderFuture.get()
-            bindPreview(cameraProvider)
-        }, ContextCompat.getMainExecutor(this))
-
-        //  Switches the Content View
-
-
-    }
-
+    // Retrieves the images and makes a prediction
     @SuppressLint("UnsafeExperimentalUsageError")
     fun bindPreview(cameraProvider : ProcessCameraProvider) {
 
         val imageCapture = ImageCapture.Builder().build()
 
-
-
-
         // Preview needed for visuals (camera)
         var preview : Preview = Preview.Builder()
             .setTargetRotation(Surface.ROTATION_0)
-                .build()
+            .build()
         //  Activates Back Camera
         var cameraSelector : CameraSelector = CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
 
         preview.setSurfaceProvider(previewView.surfaceProvider)
 
@@ -119,10 +113,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         orientationEventListener.enable()
-
-
-
-
 
 
         // Needed for model predictions
