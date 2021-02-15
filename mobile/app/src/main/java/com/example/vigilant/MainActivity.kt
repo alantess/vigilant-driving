@@ -1,20 +1,17 @@
 package com.example.vigilant
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.content.Context
-import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
-import android.view.OrientationEventListener
 import android.view.Surface
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -22,7 +19,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.visuals.*
 import kotlinx.android.synthetic.main.visuals.view.*
-import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
@@ -30,27 +26,46 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 const val MODEL_NAME = "mobile_segnet.pt"
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+    }
 
+    private var imageCapture: ImageCapture? = null
+    private lateinit var outputDirectory: File
     private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
     var module: Module? = null
     private lateinit var cameraExecutor: ExecutorService
     private var mInputTensor: Tensor? = null
     private var outputImg: Tensor? = null
     private var mInputTensorBuffer: FloatBuffer? = null
-
+    private var take_photo_button: Button? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        outputDirectory = getOutputDirectory()
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
+
 
         visuals.setOnClickListener {
             setContentView(R.layout.visuals)
             startActivity()
+            camera_capture_button.setOnClickListener { takePhoto() }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
     // Starts the camera
     fun startActivity(){
@@ -59,6 +74,38 @@ class MainActivity : AppCompatActivity() {
             val cameraProvider = cameraProviderFuture.get()
             bindPreview(cameraProvider)
         }, ContextCompat.getMainExecutor(this))
+
+    }
+    private fun getOutputDirectory(): File {
+        val mediaDir = externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
+        return if (mediaDir != null && mediaDir.exists())
+            mediaDir else filesDir
+    }
+
+    fun takePhoto() {
+        val imageCapture = imageCapture ?: return
+        val photoFile = File(
+            outputDirectory,
+            SimpleDateFormat(FILENAME_FORMAT, Locale.US
+            ).format(System.currentTimeMillis()) + ".jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture.takePicture(
+            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e("PHOTO", "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(photoFile)
+                    val msg = "Photo capture succeeded: $savedUri"
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    Log.d("PHOTO", msg)
+                }
+            })
+
+
 
     }
     // Retrieve Model path
@@ -85,11 +132,9 @@ class MainActivity : AppCompatActivity() {
     // Retrieves the images and makes a prediction
     @SuppressLint("UnsafeExperimentalUsageError")
     fun bindPreview(cameraProvider : ProcessCameraProvider) {
-
-        val imageCapture = ImageCapture.Builder().build()
-
         // Preview needed for visuals (camera)
         var preview : Preview = Preview.Builder()
+            .setTargetResolution(Size(1280,720))
             .setTargetRotation(Surface.ROTATION_0)
             .build()
         //  Activates Back Camera
@@ -99,20 +144,10 @@ class MainActivity : AppCompatActivity() {
 
         preview.setSurfaceProvider(previewView.surfaceProvider)
 
-        // Might be needed to change orientation from portrait to landscape
-        val orientationEventListener = object : OrientationEventListener(this as Context){
-            override fun onOrientationChanged(orientation: Int) {
-                val rotation : Int = when (orientation) {
-                    in 45..134 -> Surface.ROTATION_0
-                    in 135..224 -> Surface.ROTATION_0
-                    in 225..314 -> Surface.ROTATION_0
-                    else -> Surface.ROTATION_0
-                }
-                imageCapture.targetRotation = rotation
+        // Used for taking a photo
+        imageCapture = ImageCapture.Builder()
+            .build()
 
-            }
-        }
-        orientationEventListener.enable()
 
 
         // Needed for model predictions
@@ -124,11 +159,13 @@ class MainActivity : AppCompatActivity() {
 
 
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), ImageAnalysis.Analyzer { image ->
+
             if(module == null){
+                progressBar.visibility = View.VISIBLE
                 // Retrieve Model Paths and loads it
                 val modulePATH: String = File(assetFilePath(this, MODEL_NAME)).absolutePath
                 module = Module.load(modulePATH)
-                Toast.makeText(applicationContext, "Module Loaded", Toast.LENGTH_LONG).show()
+                progressBar.visibility = View.GONE
             }
             val rotationDegrees = image.imageInfo.rotationDegrees
             // Allocate Memory for image
@@ -146,9 +183,16 @@ class MainActivity : AppCompatActivity() {
                 TensorImageUtils.TORCHVISION_NORM_STD_RGB,
                 mInputTensorBuffer, 0)
 
-            // Commit a forward pass through the network (1x3x256x256)
-            outputImg = module?.forward(IValue.from(mInputTensor))?.toTensor()
-            Log.d("OUTPUT TENSOR", outputImg.toString())
+            // Commits a forward pass through the network (1x3x256x256) and turns image into a float
+//            outputImg = module?.forward(IValue.from(mInputTensor))?.toTensor()
+//            val outputs: FloatArray? = outputImg?.dataAsFloatArray
+//            Log.d("OUTPUT TENSOR", outputImg.toString())
+
+
+            // Float to Image View
+
+
+            image.close()
 
         })
 
