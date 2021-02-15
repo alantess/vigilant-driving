@@ -56,8 +56,8 @@ model.save()
 # Directory Structure
 ------
     .
-     ├── mobile             # Android app 
-     ├── Segnet             # Segmentation on lanes
+     ├── mobile             #  Android app 
+     ├── Segnet             #  Segmentation on lanes
         ├── dataset.py      #  Class to hold for the dataset
         ├── main.py         #  Main controller
         ├── network.py      #  Segmentation model
