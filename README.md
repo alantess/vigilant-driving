@@ -56,6 +56,7 @@ model.save()
 # Directory Structure
 ------
     .
+     ├── mobile             # Android app 
      ├── Segnet             # Segmentation on lanes
         ├── dataset.py      #  Class to hold for the dataset
         ├── main.py         #  Main controller
@@ -96,6 +97,13 @@ repo = 'alantess/vigilant-driving:main/1.0.5'
 model = torch.hub.load(repo, 'segnet', pretrained=True)
 ```
 ------
+
+
+# To-Do
+- [] Fix memory allocation in android 
+- [] Complete trajectory analysis. 
+- [] Deploy models on arm64 devices. 
+
 
 # License
 ----
