@@ -2,6 +2,9 @@ package com.example.vigilant
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -18,7 +21,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.visuals.*
-import kotlinx.android.synthetic.main.visuals.view.*
+import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
@@ -32,13 +35,15 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 const val MODEL_NAME = "mobile_segnet.pt"
-
+typealias LumaListener = (luma: Double) -> Unit
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
 
+    private var mBitmap: Bitmap? = null
     private var imageCapture: ImageCapture? = null
+    private var imageAnalysis: ImageAnalysis? = null
     private lateinit var outputDirectory: File
     private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
     var module: Module? = null
@@ -59,15 +64,16 @@ class MainActivity : AppCompatActivity() {
         visuals.setOnClickListener {
             setContentView(R.layout.visuals)
             startActivity()
+            camera_analyze_button.setOnClickListener { analyze_photo() }
             camera_capture_button.setOnClickListener { takePhoto() }
         }
     }
-
+    // Shuts down camera
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-    // Starts the camera
+    // Starts the camera and loads model
     fun startActivity(){
         cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener(Runnable {
@@ -76,13 +82,14 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
 
     }
+    // Directory where the photo is saved
     private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else filesDir
     }
-
+    // Takes the photo and displays it
     fun takePhoto() {
         val imageCapture = imageCapture ?: return
         val photoFile = File(
@@ -102,8 +109,15 @@ class MainActivity : AppCompatActivity() {
                     val msg = "Photo capture succeeded: $savedUri"
                     Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                     Log.d("PHOTO", msg)
+                    mBitmap = BitmapFactory.decodeFile(savedUri.path)
+                    imageView.setImageBitmap(mBitmap)
+
+
                 }
+
+
             })
+
 
 
 
@@ -129,44 +143,23 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-    // Retrieves the images and makes a prediction
+    // Analyzes photo that has been taken
+    fun analyze_photo(){
+        val image = mBitmap ?: return
+        val model = module ?: return
+
+        mInputTensor = TensorImageUtils.bitmapToFloat32Tensor(image, TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB)
+//        outputImg = model.forward(IValue.from(mInputTensor)).toTensor()
+//        val output_img = outputImg?.dataAsByteArray
+    }
+
+
+    // Analyzes Current frame
     @SuppressLint("UnsafeExperimentalUsageError")
-    fun bindPreview(cameraProvider : ProcessCameraProvider) {
-        // Preview needed for visuals (camera)
-        var preview : Preview = Preview.Builder()
-            .setTargetResolution(Size(1280,720))
-            .setTargetRotation(Surface.ROTATION_0)
-            .build()
-        //  Activates Back Camera
-        var cameraSelector : CameraSelector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-            .build()
-
-        preview.setSurfaceProvider(previewView.surfaceProvider)
-
-        // Used for taking a photo
-        imageCapture = ImageCapture.Builder()
-            .build()
-
-
-
-        // Needed for model predictions
-        val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(256,256))
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setTargetRotation(previewView.display.rotation)
-            .build()
-
-
-        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), ImageAnalysis.Analyzer { image ->
-
-            if(module == null){
-                progressBar.visibility = View.VISIBLE
-                // Retrieve Model Paths and loads it
-                val modulePATH: String = File(assetFilePath(this, MODEL_NAME)).absolutePath
-                module = Module.load(modulePATH)
-                progressBar.visibility = View.GONE
-            }
+    fun analyze_frame(){
+        val analysis = imageAnalysis ?: return
+        analysis.setAnalyzer(ContextCompat.getMainExecutor(this), ImageAnalysis.Analyzer { image ->
+            Toast.makeText(baseContext, "Analyzing...", Toast.LENGTH_SHORT).show()
             val rotationDegrees = image.imageInfo.rotationDegrees
             // Allocate Memory for image
             mInputTensorBuffer =
@@ -193,8 +186,48 @@ class MainActivity : AppCompatActivity() {
 
 
             image.close()
-
         })
+    }
+
+    // Retrieves the images and makes a prediction
+    @SuppressLint("UnsafeExperimentalUsageError")
+    fun bindPreview(cameraProvider : ProcessCameraProvider) {
+        if(module == null){
+            progressBar.visibility = View.VISIBLE
+            // Retrieve Model Paths and loads it
+            val modulePATH: String = File(assetFilePath(this, MODEL_NAME)).absolutePath
+            module = Module.load(modulePATH)
+            // Allocate Memory for image
+            mInputTensorBuffer =
+                Tensor.allocateFloatBuffer(3 *256 * 256)
+            mInputTensor = Tensor.fromBlob(
+                mInputTensorBuffer,
+                longArrayOf(1, 3, 256,256)
+            )
+            progressBar.visibility = View.GONE
+        }
+        // Preview needed for visuals (camera)
+        var preview : Preview = Preview.Builder()
+            .setTargetResolution(Size(256,256))
+            .build()
+        //  Activates Back Camera
+        var cameraSelector : CameraSelector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
+
+        preview.setSurfaceProvider(previewView.surfaceProvider)
+
+        // Used for taking a photo
+        imageCapture = ImageCapture.Builder()
+            .setTargetRotation(Surface.ROTATION_270)
+            .build()
+
+        // Needed for model predictions
+        imageAnalysis = ImageAnalysis.Builder()
+            .setTargetResolution(Size(256,256))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetRotation(previewView.display.rotation)
+            .build()
 
 
         cameraProvider.unbindAll()
@@ -203,3 +236,4 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
