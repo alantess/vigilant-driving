@@ -62,16 +62,16 @@ model.save()
         ├── main.py         #  Main controller
         ├── network.py      #  Segmentation model
         ├── train.py        #  Train and test function
-    ├── Depth               #  Segmentation on lanes
+     ├── Depth              #  Segmentation on lanes
         ├── dataset.py      #  Class to hold for the dataset
         ├── main.py         #  Main controller
         ├── network.py      #  U Net 
         ├── visual.py       #  Test and visualize the model
-    └── Speed               #  Speed Prediction
+     └── Speed              #  Speed Prediction
         ├── main.py         #  Main controller
         ├──test_pred.txt    #  Prediction for the training set
         ├──train_pred.txt   #  Prediction on the testing set
-    └── Etc               #  Random Files, Images, Gifs
+     └── Etc                #  Random Files, Images, Gifs
 
 
 # Visuals
@@ -100,9 +100,9 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 
 
 # To-Do
-- [] Fix memory allocation in android 
-- [] Complete trajectory analysis. 
-- [] Deploy models on arm64 devices. 
+- [ ] Fix memory allocation in android 
+- [ ] Complete trajectory analysis. 
+- [ ] Deploy models on arm64 devices. 
 
 
 # License
