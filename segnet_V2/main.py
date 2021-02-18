@@ -185,7 +185,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
     # Train the model
-    # train(model, device, train_loader, val_loader, loss_fn, optimizer, EPOCHS,True)
+    train(model, device, train_loader, val_loader, loss_fn, optimizer, EPOCHS)
 
     # Visualize
     visualize(video_directory, model, video_preprocess, device)
