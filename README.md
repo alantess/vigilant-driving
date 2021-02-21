@@ -35,6 +35,7 @@ model.save()
 ------
     .
      ├── mobile             #  Android app 
+     ├── gui                #  Qt GUI 
      ├── Segnet             #  Segmentation on lanes
      ├── Segnet_V2          #  Complete segmentation on the environment
      ├── Depth              #  Segmentation on lanes
