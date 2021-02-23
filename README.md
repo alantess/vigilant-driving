@@ -34,7 +34,8 @@ model.save()
 # Directory Structure
 ------
     .
-     ├── mobile             #  Android app 
+     ├── mobile             #  android app 
+     ├── arm64              #  ARM64 support 
      ├── gui                #  Qt GUI 
      ├── Segnet             #  Segmentation on lanes
      ├── Segnet_V2          #  Complete segmentation on the environment
