@@ -1,5 +1,5 @@
 dependencies = ["torch","captum"] 
-VERSION = "1.0.7" 
+VERSION = "1.0.72" 
 
 import torch
 
@@ -80,6 +80,7 @@ def segnetv2(pretrained=False, **kwargs):
         checkpoint = f"https://github.com/alantess/vigilant-driving/releases/download/{VERSION}/segnet_v2"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
         model.load_state_dict(state_dict)
+
     return model
 
 
