@@ -75,7 +75,7 @@ def segnetv2(pretrained=False, **kwargs):
     :param pretrained: Loads model weights
     :param chkpt_dir: Directory where the model is saved
     """
-    model = segnet_V2(**kwargs)
+    model = SegNetV2(**kwargs)
     if pretrained:
         checkpoint = f"https://github.com/alantess/vigilant-driving/releases/download/{VERSION}/segnet_v2"
         state_dict = torch.hub.load_state_dict_from_url(checkpoint)
