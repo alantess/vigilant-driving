@@ -54,12 +54,12 @@ model.save()
 
 
 # Release 
-- Available Models: ['disparitynet', 'segnet', 'ures', 'vidresnet']
+- Available Models: ['disparitynet', 'segnet', 'ures', 'vidresnet', 'segnetv2']
 - Please use the latest release to download models: 
     - alantess/vigilant-driving:main/{**latest_release**}
 ```python
 import torch
-repo = 'alantess/vigilant-driving:main/1.0.5'
+repo = 'alantess/vigilant-driving:main/1.0.6'
 model = torch.hub.load(repo, 'segnet', pretrained=True)
 ```
 ------
