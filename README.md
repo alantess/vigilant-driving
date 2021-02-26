@@ -1,4 +1,5 @@
 # Vigilant Driving 
+<img src="etc/LOGO.png" alt="logo"/> 
 Deep Learning on the road.
 ### Requirements
 - Requires [Pytorch](https://pytorch.org/) to run.
