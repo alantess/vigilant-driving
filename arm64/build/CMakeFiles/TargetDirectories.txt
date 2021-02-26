@@ -1,3 +1,0 @@
-/home/alan/Programming/vigilant-driving/arm64/build/CMakeFiles/rebuild_cache.dir
-/home/alan/Programming/vigilant-driving/arm64/build/CMakeFiles/edit_cache.dir
-/home/alan/Programming/vigilant-driving/arm64/build/CMakeFiles/main.dir
