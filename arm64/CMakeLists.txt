@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 
 
-
 find_package( OpenCV REQUIRED )
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
@@ -25,19 +24,19 @@ message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 
-add_executable(main main.cpp )
+add_executable(main src/main.cpp
+              include/camera.h
+              src/camera.cpp  )
 
-#Camera Files
-add_subdirectory(Camera "camera/")
-target_include_directories(main PUBLIC Camera)
-target_link_directories(main PRIVATE Camera)
-target_link_libraries(main camera )
-
-
+target_include_directories(main PRIVATE include)
 
 
 target_link_libraries( main ${OpenCV_LIBS})
-target_link_libraries(main "${TORCH_LIBRARIES}")
+target_link_libraries(main  "${TORCH_LIBRARIES}")
+
+
+
+
 
 
 set_property(TARGET main PROPERTY CXX_STANDARD 14)
