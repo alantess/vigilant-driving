@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.2)
 project(VIGILANT)
 set(CMAKE_PREFIX_PATH /home/alan/Downloads/libtorch)
 set(CMAKE_INSTALL_PREFIX /usr/local)
@@ -24,17 +24,22 @@ message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
+
 add_executable(main main.cpp )
 
 #Camera Files
-add_subdirectory(Camera)
+add_subdirectory(Camera "camera/")
 target_include_directories(main PUBLIC Camera)
 target_link_directories(main PRIVATE Camera)
-target_link_libraries(main camera)
+target_link_libraries(main camera )
+
+
 
 
 target_link_libraries( main ${OpenCV_LIBS})
 target_link_libraries(main "${TORCH_LIBRARIES}")
+
+
 set_property(TARGET main PROPERTY CXX_STANDARD 14)
 
 

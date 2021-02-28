@@ -1,4 +1,4 @@
-#include "Camera/models.cc"
+#include "models.h"
 #include <iostream>
 
 int main() {

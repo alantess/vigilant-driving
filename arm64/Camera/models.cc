@@ -9,7 +9,6 @@
 #define DEFAULT_HEIGHT 720
 #define DEFAULT_WIDTH 1280
 
-namespace {
 // Loads the model
 void load_model(model *m) {
   std::cout << "LOADING MODEL: " << m->model_name << std::endl;
@@ -40,6 +39,7 @@ int start_camera() {
   printf("Press any key to disable camera\n");
   for (;;) {
     cap.read(frame);
+    /* torch::Tensor frame_tensor = torch::tensor(frame); */
     if (frame.empty()) {
       std::cerr << "ERROR: blank frame.\n";
       break;
@@ -51,5 +51,3 @@ int start_camera() {
   }
   return 0;
 }
-
-} // namespace
