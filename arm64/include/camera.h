@@ -8,6 +8,6 @@ typedef struct model {
 
 } model;
 
-int start_camera(torch::jit::Module segnet_model);
+void start_camera(torch::jit::Module segnet_model);
 
 torch::jit::Module load_model(model *m);

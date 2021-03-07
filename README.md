@@ -18,9 +18,9 @@
 - Use "-train" to set to training mode.
 - Use "-epochs" to set the training epochs. Default is set to 1.
 ```sh
-$ cd vigilant-driving/speed
-$ mkdir models
-$ python main.py -train True -epochs 1000
+ cd vigilant-driving/speed
+ mkdir models
+ python main.py -train True -epochs 1000
 ```
 ## Important notes
 - For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
@@ -52,6 +52,18 @@ model.save()
 |  ![](etc/depth_gif.gif) |![](etc/disparitygif.gif)   |
 | <img src="etc/actual.jpg" alt="actual" width="200"/>  |  <img src="etc/interpret.jpg" alt="interpet" width="200"/> |
 ![](etc/segnet_v2.gif)
+
+
+# ARM64
+- Edit the CMakeLists file (set the correct directories) before executing.  
+- **REQUIRED** [Libtorch](https://pytorch.org/cppdocs/installing.html) [OpenCV](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html)
+  
+  ```sh
+   cd vigilant-driving/arm64
+   mkdir -p build && cd build
+   cmake .. 
+   make && ./main
+  ```
 
 
 

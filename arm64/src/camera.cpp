@@ -9,8 +9,8 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-#define DEFAULT_HEIGHT 1676
-#define DEFAULT_WIDTH 1117
+#define DEFAULT_HEIGHT 720
+#define DEFAULT_WIDTH 1280
 #define IMG_SIZE 256
 
 // Loads the model
@@ -24,7 +24,7 @@ torch::jit::Module load_model(model *m) {
 }
 
 // Makes a prediction and returns frame
-void make_predictions(cv::Mat frame, torch::jit::Module segnet_module) {
+cv::Mat make_predictions(cv::Mat frame, torch::jit::Module segnet_module) {
   double alpha = 0.5;
   double beta = (1 - alpha);
   cv::Mat x_frame;
@@ -62,59 +62,47 @@ void make_predictions(cv::Mat frame, torch::jit::Module segnet_module) {
   // Combine Original Image with Predicted image
   cv::addWeighted(x_frame, alpha, output_mat, beta, 0.0, dst);
   // RESIZE image and display it
-  cv::resize(dst, dst, cv::Size(DEFAULT_HEIGHT, DEFAULT_WIDTH));
+  cv::resize(dst, dst, cv::Size(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 
-  cv::imshow("Display window", dst);
-  int k = cv::waitKey(0); // Wait for a keystroke in the window
+  return dst;
 }
 
 // Opens the Camera
-int start_camera(torch::jit::Module segnet_model) {
-  // Camera Variables
-  cv::Mat frame;
+void start_camera(torch::jit::Module segnet_model) {
+
+  cv::Mat frame, frame_prediction;
+  //--- INITIALIZE VIDEOCAPTURE
   cv::VideoCapture cap;
-  int deviceId = 0;
-  int apiID = cv::CAP_ANY;
-
-  std::string image_path = cv::samples::findFile("../img.jpg");
-  cv::Mat img = cv::imread(image_path, cv::IMREAD_COLOR);
-  if (img.empty()) {
-    std::cout << "Could not read the image: " << image_path << std::endl;
-    return 1;
-  }
-
-  /* cv::Mat img_pred = make_predictions(img, segnet_model); */
-  make_predictions(img, segnet_model);
-  /* break; */
-
-  cap.open(deviceId, apiID);
-
-  // Checks to see if camera can be opened
+  // open the default camera using default API
+  // cap.open(0);
+  // OR advance usage: select any API backend
+  int deviceID = 0;        // 0 = open default camera
+  int apiID = cv::CAP_ANY; // 0 = autodetect default API
+  // open selected camera using selected API
+  cap.open(deviceID, apiID);
+  // check if we succeeded
   if (!cap.isOpened()) {
-    std::cerr << "ERROR! Can't open camera\n";
-    return -1;
+    std::cerr << "ERROR! Unable to open camera\n";
   }
-  printf("Opening Camera");
-
   // Set the dimentions 1280x720, Remove AutoFocus/Focus
   cap.set(cv::CAP_PROP_FRAME_WIDTH, DEFAULT_WIDTH);
   cap.set(cv::CAP_PROP_FRAME_HEIGHT, DEFAULT_HEIGHT);
   cap.set(cv::CAP_PROP_AUTOFOCUS, 0);
   cap.set(cv::CAP_PROP_FOCUS, 0);
 
-  printf("Press any key to disable camera\n");
-  // Reads each frame
   for (;;) {
+    // wait for a new frame from camera and store it into 'frame'
     cap.read(frame);
-
+    // Retrieve Prediction
+    frame_prediction = make_predictions(frame, segnet_model);
+    // check if we succeeded
     if (frame.empty()) {
-      std::cerr << "ERROR: blank frame.\n";
+      std::cerr << "ERROR! blank frame grabbed\n";
       break;
     }
-    cv::imshow("Live", frame);
-    if (cv::waitKey(5) >= 0) {
+    // show live and wait for a key with timeout long enough to show images
+    cv::imshow("Live", frame_prediction);
+    if (cv::waitKey(5) >= 0)
       break;
-    }
   }
-  return 0;
 }
