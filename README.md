@@ -42,6 +42,7 @@ model.save()
   
   ```sh
    cd vigilant-driving/arm64
+   mkdir -p models && python3 models.py
    mkdir -p build && cd build
    cmake .. 
    make && ./main
@@ -52,7 +53,6 @@ model.save()
     .
      ├── mobile             #  android app 
      ├── arm64              #  ARM64 support 
-     ├── gui                #  Qt GUI 
      ├── Segnet             #  Segmentation on lanes
      ├── Segnet_V2          #  Complete segmentation on the environment
      ├── Depth              #  Segmentation on lanes
