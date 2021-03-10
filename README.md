@@ -42,7 +42,7 @@ model.save()
   
   ```sh
    cd vigilant-driving/arm64
-   mkdir -p models && python3 models.py
+   python models.py
    mkdir -p build && cd build
    cmake .. 
    make && ./main

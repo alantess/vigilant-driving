@@ -1,71 +1,51 @@
-import torch 
+import os
+import argparse
+import torch
 from torchvision import transforms
 import cv2 as cv
 import torch.nn as nn
 
-class Net(nn.Module):
-    def __init__(self):
-       super(Net, self).__init__()
-       repo = 'alantess/vigilant-driving:main/1.0.72'
-       self.base = torch.hub.load(repo, 'segnet', pretrained=True)
 
-    def forward(self,x):
-        x = self.base(x).squeeze(0).argmax(0)
+class Net(nn.Module):
+    def __init__(self, model_name):
+        super(Net, self).__init__()
+        self.model_name = model_name
+        repo = 'alantess/vigilant-driving:main/1.0.72'
+        if self.model_name == 'vidresnet':
+            self.base = torch.hub.load(repo, model_name, pretrained=True, n_outs=40)
+        else:
+            self.base = torch.hub.load(repo, model_name, pretrained=True)
+
+    def forward(self, x):
+        if self.model_name == 'segnet':
+            x = self.base(x).squeeze(0).argmax(0)
+        elif self.model_name == 'segnetv2':
+            x = self.base(x).squeeze(0).argmax(0)
+        elif self.model_name == 'vidresnet':
+            x = self.base(x)
         return x
 
 
-
-# Loads models into a torch script module 
+# Loads models into a torch script module
 def load_model():
-    net = Net()
-    net.eval()
-    example = torch.randn(1,3,256,256)
-    traced=torch.jit.trace(net,example)
-    traced.save("models/segnet_lanes.pt")
-    print("Model saved.")
-   # model = torch.hub.load(repo, 'segnet', pretrained=True)
-   # model.eval()
-   # img = cv.imread(cv.samples.findFile("img.jpg"))
-   # # cv.imshow("Display window", img)
-   # device = torch.device("cuda")
-   # IMAGE_SIZE =256
-   # # k = cv.waitKey(0)
-   #     # Preprocess for video
-   # video_preprocess = transforms.Compose([
-   #      transforms.ToTensor(),
-   #      transforms.Resize((IMAGE_SIZE,IMAGE_SIZE)),
-   #      transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
-   #      ])
+    model_names = ['segnet' , 'segnetv2', 'vidresnet']
+    for model_name in model_names:
+        model_path = "models/" + model_name + ".pt"
+        net = Net(model_name)
+        net.eval()
 
-    
-   # model = model.to(device)
-   # x = video_preprocess(img)
-   # print(x.max())
-   # x = x.unsqueeze(0)
-   # x = x.to(device)
-   # print(x.size())
-   # out = model.forward(x).argmax(1).detach().cpu().numpy()
-   # print(x.min())
-   # import matplotlib.pyplot as plt
-   # x = x.cpu()
-   # plt.imshow(x[0].permute(1,2,0), cmap='gray')
-   # plt.imshow(out.squeeze(0), cmap='jet', alpha=0.2)
-   # plt.show()
+        if model_name == 'vidresnet':
+            example = torch.randn(1,3,40,256,256)
+        else:
+            example = torch.randn(1, 3, 256, 256)
 
-
-
-    
-    # if k == ord("s"):
-        # cv.imwrite("img.jpg", img)
-
-   # example = torch.randn((1,3,256,256))
-   # traced = torch.jit.trace(model, example)
-   # traced.save("models/segnet.pt")
-
-
-
+        traced = torch.jit.trace(net, example)
+        traced.save(model_path)
+    print("Models saved.")
 
 
 if __name__ == "__main__":
-    load_model()
+    if not os.path.exists("models"):
+        os.makedirs("models")
 
+    load_model()
