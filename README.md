@@ -6,11 +6,7 @@
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
-|  ![](etc/original_driving_vid.gif) |  ![](etc/model_lanes.gif) |
-|:-:|:-:|
-|  ![](etc/depth_gif.gif) |![](etc/disparitygif.gif)   |
-| <img src="etc/actual.jpg" alt="actual" width="200"/>  |  <img src="etc/interpret.jpg" alt="interpet" width="200"/> |
-![](etc/segnet_v2.gif)
+![](etc/header.gif)
 
 
 # SPEED

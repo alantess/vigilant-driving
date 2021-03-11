@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 from network import *
 
 
+# Gather labels from txt
 def get_labels(label_path):
     scaler = MinMaxScaler()
     df = pd.read_csv(label_path)
@@ -14,6 +15,7 @@ def get_labels(label_path):
     return scaler, data
 
 
+# Train model
 def train_model(train_dir,
                 labels_dir,
                 transform,
@@ -96,3 +98,59 @@ def train_model(train_dir,
             print("Saving...")
             best_loss = total_loss
             model.save()
+
+
+# Test Model
+def test_model(test_dir, labels_dir, gif_dir, transform, time_steps, IMG_SIZE):
+    device = torch.device(
+        "cuda") if torch.cuda.is_available() else torch.device("cpu")
+    # Load Model
+    model = VideoResNet(time_steps).to(device)
+    model.load()
+
+    # Normalization
+    norm, _ = get_labels(labels_dir)
+
+    # CV2 Text overlay variables
+    font = cv2.FONT_ITALIC
+    textLocation = (570, 412)
+    fontScale = 1
+    fontColor = (255, 255, 255)
+    lineType = 2
+    mph = "-"
+
+    img_count = 0
+    print("Starting...")
+    with torch.no_grad():
+        # Store Frames
+        image_tensor = torch.zeros((1, 3, time_steps, IMG_SIZE, IMG_SIZE),
+                                   device=device)
+        # Gather Video
+        video = cv2.VideoCapture(test_dir)
+        success, image = video.read()
+        index, i, cur_step = 0, 0, 0
+
+        while success:
+            image_tensor[:, :, cur_step, :, :] = transform(image)
+            cur_step += 1
+            if cur_step % time_steps == 0:
+                i += 1
+                index = i * time_steps
+                # Forward Pass
+                pred = model(image_tensor).reshape(time_steps, 1)
+                # Get average Speed at S(t)
+                mph = norm.inverse_transform(pred.cpu().detach().numpy())
+                mph = round(np.mean(mph))
+
+                # Reset State Tensors, and current timestep
+                image_tensor = torch.zeros(
+                    (1, 3, time_steps, IMG_SIZE, IMG_SIZE), device=device)
+                cur_step = 0
+            # Save image
+            cv2.putText(image, str(mph), textLocation, font, fontScale,
+                        fontColor, lineType)
+
+            fileName = gif_dir + "img" + str(img_count) + ".jpg"
+            cv2.imwrite(fileName, image)
+            img_count += 1
+            success, image = video.read()
