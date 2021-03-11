@@ -1,12 +1,11 @@
 # Vigilant Driving 
 <img src="etc/LOGO.png" alt="logo"/> 
-- Deep Learning on the road.
 
 # Requirements
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Requires [Captum](https://captum.ai/) for model interpretability.
 
-![](etc/header.gif)
+<img src="etc/header.gif" width=1280 />
 
 
 # SPEED
