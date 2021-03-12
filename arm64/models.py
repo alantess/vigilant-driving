@@ -21,7 +21,7 @@ class Net(nn.Module):
         self.model_name = model_name
         self.scaler, _ = get_labels(
             "/media/alan/seagate/dataset/commai_speed/train.txt")
-        repo = 'alantess/vigilant-driving:main/1.0.73'
+        repo = 'alantess/vigilant-driving:main/1.0.75'
         if self.model_name == 'vidresnet':
             self.base = torch.hub.load(repo,
                                        model_name,
