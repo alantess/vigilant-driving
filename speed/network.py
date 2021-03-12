@@ -30,7 +30,9 @@ class VideoResNet(nn.Module):
         x = self.out(x)
         if self.scaler:
             x = x.reshape(self.timesteps, 1)
+            x = x.cpu().detach().numpy()
             x = self.scaler.inverse_transform(x)
+            x = torch.tensor(x)
         return x
 
     def save(self):
