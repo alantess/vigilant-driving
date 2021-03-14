@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.2)
 project(VIGILANT)
 set(Torch_DIR /home/alan/Downloads/libtorch/share/cmake/Torch )
 set(OPENCV_EXTRA_MODULES_PATH /home/alan/opencv/opencv_contrib-master/modules)
+# The following directories is for ARM64 (NVIDIA JETSON NANO)
+# set(CMAKE_PREFIX_PATH "/home/jetsonalan/.local/lib/python3.6/site-packages/torch" )
+# set(OPENCV_EXTRA_MODULES_PATH /home/jetsonalan/opencv_build/opencv_contrib/modules)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 

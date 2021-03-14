@@ -78,7 +78,8 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 # To-Do
 - [ ] Fix memory allocation in android 
 - [ ] Complete trajectory analysis. 
-- [ ] Deploy models on arm64 devices. 
+- [x] Deploy models on ARM64 devices. 
+- [ ] Optimize Models for ARM64 to allow CUDA instead of CPU 
 
 
 # License

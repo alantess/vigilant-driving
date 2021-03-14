@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include <torch/script.h>
 #include <torch/torch.h>
+/*
+ * FOR ARM64 DEVICES WITH LOW QUALITY CAMERAS
+ * #define DEFAULT_HEIGHT 480
+ * #define DEFAULT_WIDTH 640
+ */
 
 #define DEFAULT_HEIGHT 720
 #define DEFAULT_WIDTH 1280
@@ -93,13 +98,14 @@ void start_camera(torch::jit::Module segnet_model) {
   for (;;) {
     // wait for a new frame from camera and store it into 'frame'
     cap.read(frame);
-    // Retrieve Prediction
-    frame_prediction = make_predictions(frame, segnet_model);
     // check if we succeeded
     if (frame.empty()) {
       std::cerr << "ERROR! blank frame grabbed\n";
       break;
     }
+    // Retrieve Prediction
+    frame_prediction = make_predictions(frame, segnet_model);
+
     // show live and wait for a key with timeout long enough to show images
     cv::imshow("Live", frame_prediction);
     if (cv::waitKey(5) >= 0)
