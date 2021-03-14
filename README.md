@@ -62,7 +62,7 @@ model.save()
     - alantess/vigilant-driving:main/{**latest_release**}
 ```python
 import torch
-repo = 'alantess/vigilant-driving:main/1.0.72'
+repo = 'alantess/vigilant-driving:main/1.0.75'
 model = torch.hub.load(repo, 'segnet', pretrained=True)
 ```
 ------

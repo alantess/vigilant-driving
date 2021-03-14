@@ -58,7 +58,7 @@ def load_model():
 
         # Quantized
         if model_name == 'segnet' or model_name == 'segnetv2':
-            net.qconfig = torch.quantization.get_default_qconfig('qnnpack')
+            net.qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
             net_prepared = torch.quantization.prepare(net)
             net_prepared(example)
             net_int8 = torch.quantization.convert(net_prepared)
