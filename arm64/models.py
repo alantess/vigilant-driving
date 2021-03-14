@@ -2,7 +2,6 @@ import os
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import torch
-from torchvision import transforms
 import torch.nn as nn
 
 
@@ -47,6 +46,8 @@ def load_model():
     model_names = ['segnet', 'segnetv2', 'vidresnet']
     for model_name in model_names:
         model_path = "models/" + model_name + ".pt"
+        optimized_model_path = "models/" + model_name + "_optimized" + ".pt"
+
         net = Net(model_name)
         net.eval()
 
@@ -55,8 +56,19 @@ def load_model():
         else:
             example = torch.randn(1, 3, 256, 256)
 
-        traced = torch.jit.trace(net, example)
-        traced.save(model_path)
+        # Quantized
+        if model_name == 'segnet' or model_name == 'segnetv2':
+            net.qconfig = torch.quantization.get_default_qconfig('qnnpack')
+            net_prepared = torch.quantization.prepare(net)
+            net_prepared(example)
+            net_int8 = torch.quantization.convert(net_prepared)
+            net_script_int8 = torch.jit.script(net_int8)
+            torch.jit.save(net_script_int8, optimized_model_path)
+
+        else:
+            traced = torch.jit.trace(net, example)
+            traced.save(model_path)
+
     print("Models saved.")
 
 
