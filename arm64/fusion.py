@@ -1,9 +1,22 @@
 import torch
+import torch.nn as nn
 import copy
 import torch.quantization.quantize_fx as quantize_fx
+from torch.utils.mobile_optimizer import optimize_for_mobile
 
-repo = 'alantess/vigilant-driving:main/1.0.75'
-model_fp = torch.hub.load(repo, 'segnet', pretrained=True)
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        repo = 'alantess/vigilant-driving:main/1.0.75'
+        self.model = torch.hub.load(repo, 'segnet', pretrained=True)
+
+    def forward(self, x):
+        x = self.model(x).squeeze(0).argmax(0)
+        return x.mul(100).clamp(0, 255)
+
+
+model_fp = Net()
 model_fp.eval()
 
 model_to_quantize = copy.deepcopy(model_fp)
@@ -22,4 +35,5 @@ model_fused = quantize_fx.fuse_fx(model_to_quantize)
 
 # Save model
 scipted_model = torch.jit.script(model_fused)
-torch.jit.save(scipted_model, "models/segnet_fx.pt")
+scripted_optimized_moodel = optimize_for_mobile(scipted_model)
+torch.jit.save(scripted_optimized_moodel, "models/segnet_fx_mobile.pt")
