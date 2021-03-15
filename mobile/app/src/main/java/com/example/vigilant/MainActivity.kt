@@ -1,10 +1,8 @@
 package com.example.vigilant
-
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -28,19 +26,24 @@ import org.pytorch.torchvision.TensorImageUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-const val MODEL_NAME = "mobile_segnet.pt"
-typealias LumaListener = (luma: Double) -> Unit
+const val  MODEL_NAME = "segnet_fx_mobile.pt"
+
 class MainActivity : AppCompatActivity() {
+    // Date
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
-
+    private val CLASSNUM = 3
+    private val BACKGROUND_ROAD = 0
+    private val ALTERNATIVE = 1
+    private val DIRECT = 2
     private var mBitmap: Bitmap? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalysis: ImageAnalysis? = null
@@ -52,11 +55,11 @@ class MainActivity : AppCompatActivity() {
     private var outputImg: Tensor? = null
     private var mInputTensorBuffer: FloatBuffer? = null
     private var take_photo_button: Button? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         outputDirectory = getOutputDirectory()
-
         cameraExecutor = Executors.newSingleThreadExecutor()
 
 
@@ -64,10 +67,32 @@ class MainActivity : AppCompatActivity() {
         visuals.setOnClickListener {
             setContentView(R.layout.visuals)
             startActivity()
-            camera_analyze_button.setOnClickListener { analyze_photo() }
+            camera_analyze_button.setOnClickListener { analyze_frame() }
             camera_capture_button.setOnClickListener { takePhoto() }
         }
+
     }
+    // Loads File from asset folder
+    fun assetFilePath(context: Context, assetName: String): String? {
+        val file = File(context.filesDir, assetName)
+        try {
+            context.assets.open(assetName).use { `is` ->
+                FileOutputStream(file).use { os ->
+                    val buffer = ByteArray(4 * 1024)
+                    var read: Int
+                    while (`is`.read(buffer).also { read = it } != -1) {
+                        os.write(buffer, 0, read)
+                    }
+                    os.flush()
+                }
+                return file.absolutePath
+            }
+        } catch (e: IOException) {
+            Log.e("pytorchandroid", "Error process asset $assetName to file path")
+        }
+        return null
+    }
+
     // Shuts down camera
     override fun onDestroy() {
         super.onDestroy()
@@ -89,58 +114,31 @@ class MainActivity : AppCompatActivity() {
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else filesDir
     }
+
     // Takes the photo and displays it
     fun takePhoto() {
         val imageCapture = imageCapture ?: return
         val photoFile = File(
-            outputDirectory,
-            SimpleDateFormat(FILENAME_FORMAT, Locale.US
-            ).format(System.currentTimeMillis()) + ".jpg")
+                outputDirectory,
+                SimpleDateFormat(FILENAME_FORMAT, Locale.US
+                ).format(System.currentTimeMillis()) + ".jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
         imageCapture.takePicture(
-            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e("PHOTO", "Photo capture failed: ${exc.message}", exc)
-                }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    val msg = "Photo capture succeeded: $savedUri"
-                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    Log.d("PHOTO", msg)
-                    mBitmap = BitmapFactory.decodeFile(savedUri.path)
-                    imageView.setImageBitmap(mBitmap)
-
-
-                }
-
-
-            })
-
-
-
-
-    }
-    // Retrieve Model path
-    fun assetFilePath(context: Context, assetName: String): String? {
-        val file = File(context.filesDir, assetName)
-        try {
-            context.assets.open(assetName).use { `is` ->
-                FileOutputStream(file).use { os ->
-                    val buffer = ByteArray(4 * 1024)
-                    var read: Int
-                    while (`is`.read(buffer).also { read = it } != -1) {
-                        os.write(buffer, 0, read)
-                    }
-                    os.flush()
-                }
-                return file.absolutePath
+                outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
+            override fun onError(exc: ImageCaptureException) {
+                Log.e("PHOTO", "Photo capture failed: ${exc.message}", exc)
             }
-        } catch (e: IOException) {
-            Log.e("pytorchandroid", "Error process asset $assetName to file path")
-        }
-        return null
+
+            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                val savedUri = Uri.fromFile(photoFile)
+                val msg = "Photo capture succeeded: $savedUri"
+                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                Log.d("PHOTO", msg)
+                mBitmap = BitmapFactory.decodeFile(savedUri.path)
+                imageView.setImageBitmap(mBitmap)
+            }
+        })
     }
 
     // Analyzes photo that has been taken
@@ -149,8 +147,9 @@ class MainActivity : AppCompatActivity() {
         val model = module ?: return
 
         mInputTensor = TensorImageUtils.bitmapToFloat32Tensor(image, TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB)
-//        outputImg = model.forward(IValue.from(mInputTensor)).toTensor()
-//        val output_img = outputImg?.dataAsByteArray
+        outputImg = model.forward(IValue.from(mInputTensor)).toTensor()
+        val output_img = outputImg?.dataAsByteArray
+        Toast.makeText(baseContext, "Analyzing...", Toast.LENGTH_SHORT).show()
     }
 
 
@@ -163,28 +162,53 @@ class MainActivity : AppCompatActivity() {
             val rotationDegrees = image.imageInfo.rotationDegrees
             // Allocate Memory for image
             mInputTensorBuffer =
-                Tensor.allocateFloatBuffer(3 *256 * 256)
+                    Tensor.allocateFloatBuffer(3 *256 * 256)
             mInputTensor = Tensor.fromBlob(
-                mInputTensorBuffer,
-                longArrayOf(1, 3, 256,256)
+                    mInputTensorBuffer,
+                    longArrayOf(1, 3, 256,256)
             )
             // Turn image into Tensor
             TensorImageUtils.imageYUV420CenterCropToFloatBuffer(
-                image.image, rotationDegrees,
-                256, 256,
-                TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
-                TensorImageUtils.TORCHVISION_NORM_STD_RGB,
-                mInputTensorBuffer, 0)
+                    image.image, rotationDegrees,
+                    256, 256,
+                    TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                    TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                    mInputTensorBuffer, 0)
 
             // Commits a forward pass through the network (1x3x256x256) and turns image into a float
-//            outputImg = module?.forward(IValue.from(mInputTensor))?.toTensor()
-//            val outputs: FloatArray? = outputImg?.dataAsFloatArray
-//            Log.d("OUTPUT TENSOR", outputImg.toString())
+            outputImg = module?.forward(IValue.from(mInputTensor))?.toTensor()
+            val outputs = outputImg!!.dataAsLongArray
+            Log.d("OUTPUT TENSOR", outputImg.toString())
+            val width = 256
+            val height = 256
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val byteBuffer = ByteBuffer.allocate(width*height*4)
+            // mapping smallest value to 0 and largest value to 255
+            val maxValue = outputs.max() ?: 255
+            val minValue = outputs.min() ?: 0
+            val delta = maxValue-minValue
+            var tempValue :Byte
+            // Define if float min..max will be mapped to 0..255 or 255..0
+            val conversion = when(true) {
+                false -> { v: Float -> ((v-minValue)/delta*255).toInt().toByte() }
+                true -> { v: Float -> (255-(v-minValue)/delta*255).toInt().toByte() }
+            }
+            val alpha :Byte = (255).toByte()
 
+            outputs.forEachIndexed { i, value ->
+                tempValue = conversion(value.toFloat())
+                byteBuffer.put(4*i, tempValue)
+                byteBuffer.put(4*i+1, tempValue)
+                byteBuffer.put(4*i+2, tempValue)
+                byteBuffer.put(4*i+3, alpha)
+            }
+
+            bmp.copyPixelsFromBuffer(byteBuffer)
+
+
+            imageView.setImageBitmap(bmp)
 
             // Float to Image View
-
-
             image.close()
         })
     }
@@ -199,41 +223,39 @@ class MainActivity : AppCompatActivity() {
             module = Module.load(modulePATH)
             // Allocate Memory for image
             mInputTensorBuffer =
-                Tensor.allocateFloatBuffer(3 *256 * 256)
+                    Tensor.allocateFloatBuffer(3 *256 * 256)
             mInputTensor = Tensor.fromBlob(
-                mInputTensorBuffer,
-                longArrayOf(1, 3, 256,256)
+                    mInputTensorBuffer,
+                    longArrayOf(1, 3, 256,256)
             )
             progressBar.visibility = View.GONE
         }
         // Preview needed for visuals (camera)
         var preview : Preview = Preview.Builder()
-            .setTargetResolution(Size(256,256))
-            .build()
+                .setTargetResolution(Size(256,256))
+                .build()
         //  Activates Back Camera
         var cameraSelector : CameraSelector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-            .build()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build()
 
         preview.setSurfaceProvider(previewView.surfaceProvider)
 
         // Used for taking a photo
         imageCapture = ImageCapture.Builder()
-            .setTargetRotation(Surface.ROTATION_270)
-            .build()
+                .setTargetRotation(Surface.ROTATION_270)
+                .build()
 
         // Needed for model predictions
         imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(256,256))
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setTargetRotation(previewView.display.rotation)
-            .build()
+                .setTargetResolution(Size(256,256))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetRotation(previewView.display.rotation)
+                .build()
 
 
         cameraProvider.unbindAll()
 
         cameraProvider.bindToLifecycle(this as LifecycleOwner, cameraSelector, preview, imageCapture, imageAnalysis)
     }
-
 }
-
