@@ -46,7 +46,7 @@ def load_model():
     model_names = ['segnet', 'segnetv2', 'vidresnet']
     for model_name in model_names:
         model_path = "models/" + model_name + ".pt"
-        optimized_model_path = "models/" + model_name + "_optimized" + ".pt"
+        optimized_model_path = "models/" + model_name + "_optimized_arm64" + ".pt"
 
         net = Net(model_name)
         net.eval()
@@ -64,14 +64,21 @@ def load_model():
             net_int8 = torch.quantization.convert(net_prepared)
             net_script_int8 = torch.jit.script(net_int8)
             torch.jit.save(net_script_int8, optimized_model_path)
-
+            print(
+                f"{model_name} MOBILE: {(os.path.getsize(optimized_model_path) /1e6):.2f} MB"
+            )
         else:
             traced = torch.jit.trace(net, example)
             traced.save(model_path)
+            print(
+                f"{model_name}: {(os.path.getsize(model_path) /1e6) :.2f} MB")
 
         if model_name == 'segnet':
             traced = torch.jit.trace(net, example)
             traced.save(model_path)
+            print(
+                f"{model_name} (unoptimized): {(os.path.getsize(model_path) /1e6) :.2f} MB"
+            )
 
     print("Models saved.")
 
