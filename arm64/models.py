@@ -69,6 +69,10 @@ def load_model():
             traced = torch.jit.trace(net, example)
             traced.save(model_path)
 
+        if model_name == 'segnet':
+            traced = torch.jit.trace(net, example)
+            traced.save(model_path)
+
     print("Models saved.")
 
 
