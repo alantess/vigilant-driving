@@ -1,5 +1,6 @@
 import os
 from sklearn.preprocessing import MinMaxScaler
+from torch.utils.mobile_optimizer import optimize_for_mobile
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -58,6 +59,7 @@ def load_model():
 
         # Quantized
         if model_name == 'segnet' or model_name == 'segnetv2':
+            torch.backends.quantized.engine = 'qnnpack'
             net.qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
             net_prepared = torch.quantization.prepare(net)
             net_prepared(example)
