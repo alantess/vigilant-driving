@@ -1,4 +1,5 @@
 import os
+import subprocess
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.mobile_optimizer import optimize_for_mobile
 import pandas as pd
@@ -60,10 +61,11 @@ def load_model():
         # Quantized
         if model_name == 'segnet' or model_name == 'segnetv2':
             torch.backends.quantized.engine = 'qnnpack'
-            net.qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
+            net.qconfig = torch.quantization.get_default_qconfig('qnnpack')
             net_prepared = torch.quantization.prepare(net)
             net_prepared(example)
             net_int8 = torch.quantization.convert(net_prepared)
+            torch.save(net_int8, 'models/quantized_' + model_name + '.pt')
             net_script_int8 = torch.jit.script(net_int8)
             torch.jit.save(net_script_int8, optimized_model_path)
             print(
@@ -90,3 +92,4 @@ if __name__ == "__main__":
         os.makedirs("models")
 
     load_model()
+    subprocess.run("./models.sh", shell=True)
