@@ -40,6 +40,7 @@ class vDevice(object):
             transforms.Normalize(mean=[-0.485, -0.456, -0.406],
                                  std=[1., 1., 1.]),
         ])
+        self.mph = "--"
 
         self._eval()
 
@@ -84,12 +85,11 @@ class vDevice(object):
         Takes 
         """
         # CV2 Text overlay variables
-        font = cv2.FONT_ITALIC
-        textLocation = (570, 412)
-        fontScale = 1
+        font = cv2.FONT_HERSHEY_PLAIN
+        textLocation = (50, 50)
+        fontScale = 2
         fontColor = (255, 255, 255)
         lineType = 2
-        mph = "-"
         # Preprocess
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -106,19 +106,21 @@ class vDevice(object):
         self.cur_step += 1
 
         # Makes prediction
-        if self.cur_step == self.timesteps:
-            pred = self.speedNet(image_tensor).reshape(self.timesteps, 1)
+        if self.cur_step % self.timesteps == 0:
+            pred = self.speedNet(image_tensor).reshape(
+                self.timesteps, 1).cpu().detach().numpy()
             # Get average Speed at S(t)
-            mph = self.norm.inverse_transform(pred.cpu().detach().numpy())
+            mph = self.norm.inverse_transform(pred)
             mph = round(np.mean(mph))
-            # Overlay speed on image
-            cv2.putText(image, str(mph), textLocation, font, fontScale,
-                        fontColor, lineType)
-
+            self.mph = mph
             # Reset Tensor
             image_tensor = torch.zeros(
                 (1, 3, self.timesteps, self.size, self.size),
                 device=self.device)
+            self.cur_step = 0
+
+        image = cv2.putText(image, str(self.mph), textLocation, font,
+                            fontScale, fontColor, lineType)
 
         return image
 
@@ -156,6 +158,8 @@ class vDevice(object):
         """
         Ovelay outputs from models
         """
+
+        image = self._speed_pred(image)
         # Segnets
         segnet = self._segnet_pred(image)
 
@@ -170,12 +174,3 @@ class vDevice(object):
         final = cv2.resize(final, self.img_size[::-1])
 
         cv2.imshow('Main', final)
-
-
-if __name__ == "__main__":
-    v = vDevice()
-
-    test_video_dir = "/media/alan/seagate/dataset/commai_speed/videos/test.mp4"
-    frame_size = (1280, 720)
-    # v.init_video(video_dir=test_video_dir, size=frame_size)
-    v.init_camera(size=frame_size)
