@@ -24,7 +24,9 @@ class vDevice(object):
 
         self.cur_step = 0
         self.overlay_images = []
-        self.norm, _ = self._get_labels("")
+        self.norm, _ = self._get_labels(
+            "/media/alan/seagate/dataset/commai_speed/train.txt")
+        self.img_size = None
         self.size = 256
         self.timesteps = 49
         self.preprocess = transforms.Compose([
@@ -39,8 +41,9 @@ class vDevice(object):
                                  std=[1., 1., 1.]),
         ])
 
-    def init_camera(self, size=None):
+    def init_camera(self, size):
         self._eval()
+        self.img_size = size[::-1]
         """
         :params --> size: size of the frame. must be a tuple WxH
         """
@@ -50,6 +53,8 @@ class vDevice(object):
             _, frame = cap.read()
             if size:
                 frame = cv2.resize(frame, size)
+
+            self._overlay(frame)
             cv2.imshow('frame', frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -58,21 +63,25 @@ class vDevice(object):
         cap.release()
         cv2.destroyAllWindows()
 
-    def _segnet_pred(self, image, version=1):
+    def _segnet_pred(self, image):
+        """
+        input:image
+        returns: mask for each segnet model  
+        """
+        resize = transforms.Resize(self.img_size)
         image = self.preprocess(image)
         image = image.to(self.device, dtype=torch.float32).unsqueeze(0)
-        try:
-            if version == 1:
-                mask = self.segNet(image)
-            elif version == 2:
-                mask = self.segnetv2(image)
-        except ValueError:
-            print("Please enter a valid number.")
-        mask = mask.argmax(1).detach().cpu()
-        mask = self.inv_preprocess(mask).numpy()
+        mask = {"v1": self.segNet(image), "v2": self.segnetv2(image)}
+        for version in mask:
+            mask[version] = mask[version].argmax(1).detach().cpu()
+            mask[version] = resize(mask[version]).numpy().squeeze(0)
+
         return mask
 
     def _speed_pred(self, image):
+        """
+        Takes 
+        """
         # CV2 Text overlay variables
         font = cv2.FONT_ITALIC
         textLocation = (570, 412)
@@ -119,11 +128,31 @@ class vDevice(object):
 
     # Gather labels from txt
     def _get_labels(self, label_path):
+        """
+        Normalizes MPH
+        """
         scaler = MinMaxScaler()
         df = pd.read_csv(label_path)
         scaler.fit(df.values)
         data = scaler.transform(df.values)
         return scaler, data
 
-    def _overlay():
-        pass
+    def _overlay(self, image):
+        """
+        Ovelay outputs from models
+        """
+        segnet = self._segnet_pred(image)
+        for x in segnet:
+            segnet[x] = np.stack((segnet[x], ) * 3, axis=-1)
+            image = cv2.addWeighted(image,
+                                    0.5,
+                                    segnet[x],
+                                    0.1,
+                                    0,
+                                    dtype=cv2.CV_32F)
+
+
+if __name__ == "__main__":
+    v = vDevice()
+
+    v.init_camera(size=(1280, 720))
