@@ -41,8 +41,9 @@ class vDevice(object):
                                  std=[1., 1., 1.]),
         ])
 
-    def init_camera(self, size):
         self._eval()
+
+    def init_camera(self, size):
         self.img_size = size[::-1]
         """
         :params --> size: size of the frame. must be a tuple WxH
@@ -51,11 +52,10 @@ class vDevice(object):
 
         while (True):
             _, frame = cap.read()
-            if size:
-                frame = cv2.resize(frame, size)
+            frame = cv2.resize(frame, size)
 
             self._overlay(frame)
-            cv2.imshow('frame', frame)
+            # cv2.imshow('frame', frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -73,7 +73,8 @@ class vDevice(object):
         image = image.to(self.device, dtype=torch.float32).unsqueeze(0)
         mask = {"v1": self.segNet(image), "v2": self.segnetv2(image)}
         for version in mask:
-            mask[version] = mask[version].argmax(1).detach().cpu()
+            mask[version] = mask[version].argmax(1).detach().cpu().mul(
+                127.5).clamp(0, 255)
             mask[version] = resize(mask[version]).numpy().squeeze(0)
 
         return mask
@@ -121,6 +122,20 @@ class vDevice(object):
 
         return image
 
+    def init_video(self, video_dir, size):
+        self.img_size = size[::-1]
+        video = cv2.VideoCapture(video_dir)
+        success, frame = video.read()
+        while success:
+            success, frame = video.read()
+            frame = cv2.resize(frame, size)
+            self._overlay(frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        video.release()
+        cv2.destroyAllWindows()
+
     def _eval(self):
         self.speedNet.eval()
         self.segNet.eval()
@@ -141,18 +156,26 @@ class vDevice(object):
         """
         Ovelay outputs from models
         """
+        # Segnets
         segnet = self._segnet_pred(image)
+
         for x in segnet:
-            segnet[x] = np.stack((segnet[x], ) * 3, axis=-1)
-            image = cv2.addWeighted(image,
-                                    0.5,
-                                    segnet[x],
-                                    0.1,
-                                    0,
-                                    dtype=cv2.CV_32F)
+            segnet[x] = np.stack((segnet[x], ) * 3, axis=-1).astype(np.uint8)
+            segnet[x] = cv2.applyColorMap(segnet[x], cv2.COLORMAP_JET)
+
+        imagev1 = cv2.addWeighted(image, 0.9, segnet["v1"], 0.2, 0)
+        imagev2 = cv2.addWeighted(image, 0.9, segnet["v2"], 0.2, 0)
+        # Concat and resize frames
+        final = cv2.hconcat([imagev1, imagev2])
+        final = cv2.resize(final, self.img_size[::-1])
+
+        cv2.imshow('Main', final)
 
 
 if __name__ == "__main__":
     v = vDevice()
 
-    v.init_camera(size=(1280, 720))
+    test_video_dir = "/media/alan/seagate/dataset/commai_speed/videos/test.mp4"
+    frame_size = (1280, 720)
+    # v.init_video(video_dir=test_video_dir, size=frame_size)
+    v.init_camera(size=frame_size)
