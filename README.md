@@ -3,15 +3,16 @@
 
 # Requirements
 - Requires [Pytorch](https://pytorch.org/) to run.
-- Use tools.yml / requirement.txt to install the appropriate packages that you may need to install in your system.
+- Use tools.txt or requirement.txt to install the appropriate packages that you may need to install in your system.
+## Pip
 ```sh
    cd vigilant-driving
    python -m pip install -r requirements.txt
   ```
-
+## Conda
 ```sh
    cd vigilant-driving
-   conda env create -f tools.yml
+   conda create -n <environment-name> --file tools.txt
   ```
 
 <img src="etc/header.gif" width=1280 />
