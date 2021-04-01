@@ -3,32 +3,31 @@
 
 # Requirements
 - Requires [Pytorch](https://pytorch.org/) to run.
-- Requires [Captum](https://captum.ai/) for model interpretability.
+- Use tools.yml / requirement.txt to install the appropriate packages that you may need to install in your system.
+```sh
+   cd vigilant-driving
+   python -m pip install -r requirements.txt
+  ```
+
+```sh
+   cd vigilant-driving
+   conda env create -f tools.yml
+  ```
 
 <img src="etc/header.gif" width=1280 />
 
 
-# SPEED
-## Training Mode
-- Use "-train" to set to training mode.
-- Use "-epochs" to set the training epochs. Default is set to 1.
-
+# Run
+- Makes prediction using the device's camera 
   ```sh
-   cd vigilant-driving/speed
-   mkdir models
-   python main.py -train True -epochs 1000
+   cd vigilant-driving/common
+   python run.py -load camera 
   ```
-
-## Important notes
-- For first time user please comment out the code below until a model has been saved. You cannot load a model that doesn't exist. Can be found in the train function.
-```python
-# model.load()
-```
-- In order to save the model uncomment the code below in the train function. 
-```python
-model.save()
-```
-- Downloading the dataset may be better than using links. If done, please set the directories of the videos and text file in the code.
+- Make prediction using a .mp4 file 
+  ```sh
+   cd vigilant-driving/common
+   python run.py -video insert_your_video_here.mp4 -load video  
+  ```
 
 
 # ARM64
