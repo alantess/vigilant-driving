@@ -46,6 +46,7 @@ model.save()
 # Directory Structure
 ------
     .
+     ├── common             #  Main control for all models 
      ├── mobile             #  android app 
      ├── arm64              #  ARM64 support 
      ├── Segnet             #  Segmentation on lanes
@@ -76,10 +77,11 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 
 
 # To-Do
-- [ ] Fix memory allocation in android 
+- [x] Fix memory allocation in android. 
+- [ ] Re-train speed.  
 - [ ] Complete trajectory analysis. 
 - [x] Deploy models on ARM64 devices. 
-- [ ] Optimize Models for ARM64 to allow CUDA instead of CPU 
+- [ ] Optimize Models for ARM64 to allow CUDA instead of CPU. 
 
 
 # License
