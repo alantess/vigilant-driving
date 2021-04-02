@@ -152,7 +152,6 @@ def test_model(test_dir, labels_dir, gif_dir, transform, time_steps, IMG_SIZE):
             image = cv2.putText(image, str(mph), textLocation, font, fontScale,
                                 fontColor, lineType)
 
-            # fileName = gif_dir + "img" + str(img_count) + ".jpg"
             cv2.imshow('main', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
