@@ -2,13 +2,13 @@ import torch
 import pandas as pd
 import numpy as np
 import cv2
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from network import *
 
 
 # Gather labels from txt
 def get_labels(label_path):
-    scaler = MinMaxScaler()
+    scaler = StandardScaler()
     df = pd.read_csv(label_path)
     scaler.fit(df.values)
     data = scaler.transform(df.values)
@@ -16,17 +16,19 @@ def get_labels(label_path):
 
 
 # Train model
-def train_model(train_dir,
-                labels_dir,
-                transform,
-                loss_fn,
-                time_steps,
-                IMG_SIZE,
-                EPOCHS=1,
-                load=False):
+def train_model(
+    train_dir,
+    labels_dir,
+    transform,
+    loss_fn,
+    time_steps,
+    IMG_SIZE,
+    EPOCHS=1,
+    load=False,
+):
     device = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = VideoResNet(time_steps).to(device)
+    model = VideoResNet(time_steps, 1e-6).to(device)
     # Load Model
     if load:
         model.load()
@@ -91,13 +93,17 @@ def train_model(train_dir,
                 cur_step = 0
 
             success, image = video.read()
-        print(f"EPOCH # {epoch}| TOTAL LOSS: {total_loss:.3f}")
+        print(
+            f"EPOCH # {epoch}: Loss: {total_loss:.3f}  Best: {best_loss:.3f}")
 
         # Save model based on loss
         if total_loss < best_loss:
             print("Saving...")
             best_loss = total_loss
             model.save()
+
+        if total_loss < 2.5:
+            break
 
 
 # Test Model
@@ -128,14 +134,13 @@ def test_model(test_dir, labels_dir, gif_dir, transform, time_steps, IMG_SIZE):
         # Gather Video
         video = cv2.VideoCapture(test_dir)
         success, image = video.read()
-        index, i, cur_step = 0, 0, 0
+        i, cur_step = 0, 0
 
         while success:
             image_tensor[:, :, cur_step, :, :] = transform(image)
             cur_step += 1
             if cur_step % time_steps == 0:
                 i += 1
-                index = i * time_steps
                 # Forward Pass
                 pred = model(image_tensor).reshape(time_steps, 1)
                 # Get average Speed at S(t)
@@ -147,10 +152,13 @@ def test_model(test_dir, labels_dir, gif_dir, transform, time_steps, IMG_SIZE):
                     (1, 3, time_steps, IMG_SIZE, IMG_SIZE), device=device)
                 cur_step = 0
             # Save image
-            cv2.putText(image, str(mph), textLocation, font, fontScale,
-                        fontColor, lineType)
+            image = cv2.putText(image, str(mph), textLocation, font, fontScale,
+                                fontColor, lineType)
 
-            fileName = gif_dir + "img" + str(img_count) + ".jpg"
-            cv2.imwrite(fileName, image)
+            # fileName = gif_dir + "img" + str(img_count) + ".jpg"
+            cv2.imshow('main', image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
             img_count += 1
             success, image = video.read()

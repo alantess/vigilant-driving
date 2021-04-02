@@ -10,6 +10,8 @@ from torchvision import models
 class VideoResNet(nn.Module):
     def __init__(self, timesteps, lr=1e-5, scaler=None, chkpt_dir="models"):
         super(VideoResNet, self).__init__()
+        if not os.path.exists(chkpt_dir):
+            os.mkdir(chkpt_dir)
         self.base_model = models.video.r3d_18(pretrained=True)
         self.gru = nn.GRU(400, 256, 3)
         self.fc1 = nn.Linear(256, 128)
@@ -28,11 +30,6 @@ class VideoResNet(nn.Module):
         x = F.selu(self.fc1(x))
         x = F.selu(self.fc2(x))
         x = self.out(x)
-        if self.scaler:
-            x = x.reshape(self.timesteps, 1)
-            y = x.cpu().detach().numpy()
-            y = self.scaler.inverse_transform(y)
-            x = torch.from_numpy(y)
         return x
 
     def save(self):
