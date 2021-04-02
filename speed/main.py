@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # print("Train Mode.")
     # train_model(train_video, train_labels, transform, loss_fn, TIMESTEPS, SIZE,
-    # EPOCHS, True)
+    #             EPOCHS)
 
     print("Test Mode.")
     test_model(test_video, train_labels, gif_dir, transform, TIMESTEPS, SIZE)

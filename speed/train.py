@@ -73,6 +73,7 @@ def train_model(
                 # Forward Pass
                 with torch.cuda.amp.autocast():
                     pred = model(image_tensor)
+                    # Compute loss
                     loss = loss_fn(pred, y)
 
                 total_loss += loss.item()
