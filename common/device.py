@@ -109,7 +109,6 @@ class vDevice(object):
         if self.cur_step % self.timesteps == 0:
             pred = self.speedNet(image_tensor).reshape(
                 self.timesteps, 1).cpu().detach().numpy()
-            print(pred)
             # Get average Speed at S(t)
             mph = self.norm.inverse_transform(pred)
             mph = round(np.mean(mph))
