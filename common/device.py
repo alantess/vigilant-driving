@@ -11,7 +11,7 @@ class vDevice(object):
         # Device
         self.device = torch.device(
             'cuda') if torch.cuda.is_available() else torch.device('cpu')
-        repo = 'alantess/vigilant-driving:main/1.0.75'
+        repo = 'alantess/vigilant-driving:main/1.0.8'
         # Loads Models
         self.segNet = torch.hub.load(repo, 'segnet',
                                      pretrained=True).to(self.device)
@@ -41,6 +41,8 @@ class vDevice(object):
                                  std=[1., 1., 1.]),
         ])
         self.mph = "--"
+        self.image_tensor = torch.zeros(
+            (1, 3, self.timesteps, self.size, self.size), device=self.device)
 
         self._eval()
 
@@ -98,23 +100,22 @@ class vDevice(object):
                                  std=[0.22803, 0.22145, 0.216989])
         ])
 
-        # Holds frames at St
-        image_tensor = torch.zeros(
-            (1, 3, self.timesteps, self.size, self.size), device=self.device)
         # Sets Frame at St
-        image_tensor[:, :, self.cur_step, :, :] = transform(image)
+        self.image_tensor[:, :, self.cur_step, :, :] = transform(image)
         self.cur_step += 1
 
         # Makes prediction
         if self.cur_step % self.timesteps == 0:
-            pred = self.speedNet(image_tensor).reshape(
-                self.timesteps, 1).cpu().detach().numpy()
+
+            # Forward Pass
+            pred = self.speedNet(self.image_tensor).reshape(self.timesteps, 1)
             # Get average Speed at S(t)
-            mph = self.norm.inverse_transform(pred)
+            mph = self.norm.inverse_transform(pred.cpu().detach().numpy())
+            # Get average Speed at S(t)
             mph = round(np.mean(mph))
             self.mph = mph
             # Reset Tensor
-            image_tensor = torch.zeros(
+            self.image_tensor = torch.zeros(
                 (1, 3, self.timesteps, self.size, self.size),
                 device=self.device)
             self.cur_step = 0

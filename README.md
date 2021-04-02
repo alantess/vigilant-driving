@@ -81,7 +81,7 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 - [ ] Re-train speed.  
 - [ ] Complete trajectory analysis. 
 - [x] Deploy models on ARM64 devices. 
-- [ ] Optimize Models for ARM64 to allow CUDA instead of CPU. 
+- [ ] Quantize all the models. 
 
 
 # License
