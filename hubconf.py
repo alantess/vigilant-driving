@@ -1,5 +1,5 @@
 dependencies = ["torch", "captum"]
-VERSION = "1.0.75"
+VERSION = "1.0.8"
 
 import torch
 
