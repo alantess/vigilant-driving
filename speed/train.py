@@ -102,9 +102,6 @@ def train_model(
             best_loss = total_loss
             model.save()
 
-        if total_loss < 2.5:
-            break
-
 
 # Test Model
 def test_model(test_dir, labels_dir, gif_dir, transform, time_steps, IMG_SIZE):
