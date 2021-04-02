@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import pandas as pd
 from torchvision import transforms
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import cv2
 
 
@@ -109,6 +109,7 @@ class vDevice(object):
         if self.cur_step % self.timesteps == 0:
             pred = self.speedNet(image_tensor).reshape(
                 self.timesteps, 1).cpu().detach().numpy()
+            print(pred)
             # Get average Speed at S(t)
             mph = self.norm.inverse_transform(pred)
             mph = round(np.mean(mph))
@@ -148,7 +149,7 @@ class vDevice(object):
         """
         Normalizes MPH
         """
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         df = pd.read_csv(label_path)
         scaler.fit(df.values)
         data = scaler.transform(df.values)
