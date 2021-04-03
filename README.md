@@ -4,7 +4,7 @@
 # Requirements
 - Requires [Pytorch](https://pytorch.org/) to run.
 - Use tools.txt or requirement.txt to install the appropriate packages that you may need to install in your system.
-## Pip
+## Pip 
 ```sh
    cd vigilant-driving
    python -m pip install -r requirements.txt
@@ -28,6 +28,11 @@
   ```sh
    cd vigilant-driving/common
    python run.py -video insert_your_video_here.mp4 -load video  
+  ```
+- Enable static quantization
+ ```sh
+   cd vigilant-driving/common
+   python run.py -quantize True  
   ```
 
 
