@@ -110,7 +110,6 @@ class vDevice(object):
     def _quantize_models(self, model, backend='qnnpack', config=False):
         torch.backends.quantized.engine = backend
         qconfig = torch.quantization.get_default_qconfig(backend)
-
         model.to('cpu')
         model.qconfig = qconfig
         # Needs to be off for conv2 to work

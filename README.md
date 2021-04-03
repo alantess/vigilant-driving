@@ -29,14 +29,9 @@
    cd vigilant-driving/common
    python run.py -video insert_your_video_here.mp4 -load video  
   ```
-- Enable static quantization
- ```sh
-   cd vigilant-driving/common
-   python run.py -quantize True  
-  ```
 
 
-# ARM64
+# C++  
 - **REQUIRED** [Libtorch](https://pytorch.org/cppdocs/installing.html) | [OpenCV](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html)
 - Edit the CMakeLists file (set the correct directories) before executing.  
   
@@ -86,7 +81,7 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 - [ ] Re-train speed.  
 - [ ] Complete trajectory analysis. 
 - [x] Deploy models on ARM64 devices. 
-- [ ] Quantize all the models. 
+- [x] Quantize all the models. 
 
 
 # License
