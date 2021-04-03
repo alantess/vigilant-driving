@@ -49,10 +49,11 @@
      ├── common             #  Main control for all models 
      ├── mobile             #  android app 
      ├── arm64              #  ARM64 support 
-     ├── Segnet             #  Segmentation on lanes
-     ├── Segnet_V2          #  Complete segmentation on the environment
-     ├── Depth              #  Segmentation on lanes
-     ├── Speed              #  Speed Prediction
+     ├── segnet             #  Segmentation on lanes
+     ├── segnet_V2          #  Complete segmentation on the environment
+     ├── depth              #  Segmentation on lanes
+     ├── speed              #  Speed Prediction
+     ├── collection         #  Used to gather data 
      ├── Etc                #  Random Files, Images, Gifs
 
 
