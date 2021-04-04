@@ -113,9 +113,9 @@ class vDevice(object):
         model.to('cpu')
         model.qconfig = qconfig
         # Needs to be off for conv2 to work
-        # model.base.base_model.convs.qconfig = None
+        model.base.base_model.backbone.qconfig = None
         torch.quantization.prepare(model, inplace=True)
-        torch.quantization.convert(model, inplace=True)
+        torch.quantization.convert(model, inplace=False)
         self._print_size_of_model(model)
 
         print("Models Quantized.")
