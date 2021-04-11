@@ -43,6 +43,10 @@
    make && ./main
   ```
 
+
+# GUI (In Progress):
+- Vigilant Driving Application can be found [here](https://github.com/alantess/vigilantapp). 
+
 # Directory Structure
 ------
     .
