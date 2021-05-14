@@ -43,7 +43,6 @@
    make && ./main
   ```
 
-
 # GUI (In Progress):
 - Vigilant Driving Application can be found [here](https://github.com/alantess/vigilantapp). 
 
@@ -92,4 +91,8 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 # License
 ----
 
+
 MIT
+
+
+- *REPO IS NOT LONGER BEING MAINTAINED.*
