@@ -95,4 +95,4 @@ model = torch.hub.load(repo, 'segnet', pretrained=True)
 MIT
 
 
-- *REPO IS NOT LONGER BEING MAINTAINED.*
+*REPO IS NO LONGER BEING MAINTAINED.*
